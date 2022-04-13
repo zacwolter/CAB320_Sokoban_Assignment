@@ -72,7 +72,43 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-    ##         "INSERT YOUR CODE HERE"    
+
+    ###
+    # First, understanding what cells are inside the factory:
+    #   Check 1: If a cell is empty AND there has been at least 1 cell that denoted a wall before it,
+    #            then it is inside the warehouse
+    #   Issue 1: All cells outside the warehouse on the right side of the final wall piece will be 
+    #            counted incorrectly as inside
+    #       Example:
+    #
+    #           "      # # # #      "    ==     "x x x # # # # o o o"
+    #
+    #         Where "x" denotes outside and "o" denotes inside
+    #
+    #       BUT:
+    #           When looking at the warehouse .txt files, it appears that no spaces are added after
+    #           the final wall in a line like so:
+    #
+    #           "      # # # #"     ==   "x x x # # # #"
+    #
+    #           Which is correct in identifying what is outside the warehouse
+    #   HENCE Issue 1 is resolved based on the assumption that this occurrence is consistent across all
+    #         warehouse .txt files.
+    #   
+    # Next, understanding how to denote horizontally and vertically adjacent taboo cells
+    #   - We know that all corners that are not targets are taboo cells, and any cells between two corners
+    #     are also taboo cells if none of them are a target
+    #   - To understand if a taboo cell is a corner, all four sides (top, bottom, left and right) need to be
+    #     checked for existing walls... if a cell has at least two walls surrounding it, then it is a corner
+    #       - It is NOT logical to assume that a cell that is adjacent to one wall is part of a set of cells
+    #         between two corners because some walls are standalone or within the confines of the warehouse
+    #   - To find other cells that are taboo (cells that are part of a set of cells between two corners where
+    #     no target cells lie), simply find the enclosing walls (either vertically or horizontally) and check
+    #     if any of the cells between the two walls are targets. If not, then all cells that are enclosed are
+    #     classified as taboo
+    ###
+    sokoban.find_2D_iterator()
+
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -102,12 +138,56 @@ class SokobanPuzzle(search.Problem):
 
     
     def __init__(self, warehouse):
-        raise NotImplementedError()
+        # NEED TO DEFINE A GOAL STATE
+        #   - Could do this by using the warehouse's extract_locations method and 
+        #     setting the cells where the worker and boxes are to be empty, as well
+        #     as setting the target cells to be full... do we need to consider the
+        #     position of the worker in the goal state???? I personally don't think so
+        #     because what matters is getting the boxes to the targets, whilst the position
+        #     of the worker only determines what legal moves are available
+        raise NotImplementedError
 
     def actions(self, state):
+        
         """
         Return the list of actions that can be executed in the given state.
         
+        """
+        # THIS IS WHERE WE NEED TO BE ABLE TO DEFINE ALL AVAILABLE ACTIONS IN A GIVEN STATE
+        #   - check_elem_action_seq seems to be more about testing a long sequence of actions
+        #     when combined if they're legal or not
+        raise NotImplementedError
+
+    def result(self, state, action):
+        """
+        Return the state of the warehouse after the given action is completed (HECK)
+
+        Looks like we will have to implement a separate function/class to do this complex
+        step...
+        """
+        raise NotImplementedError
+    
+    def goal_test(self, state):
+        """
+        Make a comparison between the initialised goal state and the current state, taking no
+        notice of the position of the worker, just the position of the boxes
+
+        The legal move checking system will ensure that the worker is in a legal state
+        """
+        raise NotImplementedError
+
+    def path_cost(self, c, state1, action, state2):
+        """
+        Return the cost of using action to travel from state1 to state2, taking into consideration
+        the weight of the box and knowing that the cost to move one space is 1.
+        """
+        raise NotImplementedError
+    
+    def value(self, state):
+        """For optimization problems, each state has a value.  Hill-climbing
+        and related algorithms try to maximize this value.
+        
+        IT SEEMS LIKE THIS MIGHT BE THE HEURISTIC WE'RE IMPLEMENTING???
         """
         raise NotImplementedError
 
