@@ -107,12 +107,15 @@ def taboo_cells(warehouse):
     #     if any of the cells between the two walls are targets. If not, then all cells that are enclosed are
     #     classified as taboo
     ###
-    sokoban.find_2D_iterator()
 
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+class State:
+    def __init__(self, worker_loc=None, box_locs=None):
+        self.worker_loc = worker_loc
+        self.box_locs = box_locs
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -138,17 +141,10 @@ class SokobanPuzzle(search.Problem):
 
     
     def __init__(self, warehouse):
-        # NEED TO DEFINE A GOAL STATE
-        #   - Could do this by using the warehouse's extract_locations method and 
-        #     setting the cells where the worker and boxes are to be empty, as well
-        #     as setting the target cells to be full... do we need to consider the
-        #     position of the worker in the goal state???? I personally don't think so
-        #     because what matters is getting the boxes to the targets, whilst the position
-        #     of the worker only determines what legal moves are available
-        raise NotImplementedError
+        self.warehouse = warehouse
+        self.state = State(worker_loc = warehouse.worker, box_locs = warehouse.boxes)
 
     def actions(self, state):
-        
         """
         Return the list of actions that can be executed in the given state.
         
@@ -156,16 +152,142 @@ class SokobanPuzzle(search.Problem):
         # THIS IS WHERE WE NEED TO BE ABLE TO DEFINE ALL AVAILABLE ACTIONS IN A GIVEN STATE
         #   - check_elem_action_seq seems to be more about testing a long sequence of actions
         #     when combined if they're legal or not
-        raise NotImplementedError
+        
+        # First gain an understanding of the current state
+        worker_loc = state.worker
+        box_locs = state.boxes
+        wall_locs = self.warehouse.walls
+
+        # Next check where the worker can move and append it to the list of possible actions
+        legal_moves = []    # list of legal actions
+
+        # UP: Check if there is a wall or a box in the space above the worker
+        boxes_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
+        walls_above = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
+        if len(boxes_above) > 0:
+            # There is a box above the worker, need to check if there are any boxes/walls above the box
+            blocking_box_above = [(x,y) for (x,y) in box_locs if x == boxes_above[0][0] - 1 if boxes_above[0][1] == y]
+            blocking_wall_above = [(x,y) for (x,y) in wall_locs if x == boxes_above[0][0] - 1 if boxes_above[0][1] == y]
+            # If there is no blocking box or wall in the space above, append "UP" as a legal move 
+            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
+            if len(blocking_box_above) == 0 and len(blocking_wall_above) == 0:
+                legal_moves.append("UP")
+        elif len(walls_above) > 0:
+            # There is a wall above the worker, therefore we cannot move up
+            pass
+        else:
+            # There is no wall or box above the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            legal_moves.append("UP")
+
+        # DOWN: Check if there is a wall or a box in the space below the worker
+        boxes_below = [(x,y) for (x,y) in box_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
+        walls_below = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
+        if len(boxes_below) > 0:
+            # There is a box below the worker, need to check if there are any boxes/walls below the box
+            blocking_box_below = [(x,y) for (x,y) in box_locs if x == boxes_below[0][0] + 1 if boxes_below[0][1] == y]
+            blocking_wall_below = [(x,y) for (x,y) in wall_locs if x == boxes_below[0][0] + 1 if boxes_below[0][1] == y]
+            # If there is no blocking box or wall in the space below, append "DOWN" as a legal move 
+            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
+            if len(blocking_box_below) == 0 and len(blocking_wall_below) == 0:
+                legal_moves.append("DOWN")
+        elif len(walls_below) > 0:
+            # There is a wall below the worker, therefore we cannot move up
+            pass
+        else:
+            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            legal_moves.append("DOWN")
+
+        # LEFT: Check if there is a wall or a box in the space to the left of the worker
+        boxes_left = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
+        walls_left = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
+        if len(boxes_left) > 0:
+            # There is a box to the left of the worker, need to check if there are any boxes/walls to the left of the box
+            blocking_box_left = [(x,y) for (x,y) in box_locs if x == boxes_left[0][0] if boxes_left[0][1] - 1 == y]
+            blocking_wall_left = [(x,y) for (x,y) in wall_locs if x == boxes_left[0][0] if boxes_left[0][1] - 1 == y]
+            # If there is no blocking box or wall in the space to the left, append "LEFT" as a legal move 
+            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
+            if len(blocking_box_left) == 0 and len(blocking_wall_left) == 0:
+                legal_moves.append("LEFT")
+        elif len(walls_left) > 0:
+            # There is a wall below the worker, therefore we cannot move up
+            pass
+        else:
+            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            legal_moves.append("LEFT")
+
+        # RIGHT: Check if there is a wall or a box in the space to the right of the worker
+        boxes_right = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+        walls_right = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+        if len(boxes_right) > 0:
+            # There is a box to the right of the worker, need to check if there are any boxes/walls to the right of the box
+            blocking_box_right = [(x,y) for (x,y) in box_locs if x == boxes_right[0][0] if boxes_right[0][1] + 1 == y]
+            blocking_wall_right = [(x,y) for (x,y) in wall_locs if x == boxes_right[0][0] if boxes_right[0][1] + 1 == y]
+            # If there is no blocking box or wall in the space to the right, append "RIGHT" as a legal move 
+            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
+            if len(blocking_box_right) == 0 and len(blocking_wall_right) == 0:
+                legal_moves.append("RIGHT")
+        elif len(walls_right) > 0:
+            # There is a wall below the worker, therefore we cannot move up
+            pass
+        else:
+            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            legal_moves.append("RIGHT")
+        
+        return legal_moves
+        
+        # REFER TO testing.py FOR TESTING OF THE ABOVE CODE (VERIFIED WORKS ON WAREHOUSE 3)
 
     def result(self, state, action):
         """
-        Return the state of the warehouse after the given action is completed (HECK)
+        Return the state of the warehouse after the given action is completed
 
-        Looks like we will have to implement a separate function/class to do this complex
-        step...
+        Simply need to check if we're moving just the worker or a box also (keep in mind the actions should
+        theoretically be legal based on the above function that checks it)
         """
-        raise NotImplementedError
+        worker_loc = state.worker_loc
+        box_locs = state.box_locs
+        
+        # Use action to determine which direction the worker is moving and check if any boxes are in the path
+        if action == "UP":
+            box_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
+            if len(box_above) > 0:
+                # Since there is a box above the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it up one space)
+                box_index = box_locs.index(box_above[0])
+                box_locs[box_index] = (box_above[0][0] - 1, box_above[0][1])
+            # Regardless of if there's a box, still move the worker's location up one space
+            worker_loc = (worker_loc[0] - 1, worker_loc[1])
+        elif action == "DOWN":
+            box_below = [(x,y) for (x,y) in box_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
+            if len(box_below) > 0:
+                # Since there is a box below the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it down one space)
+                box_index = box_locs.index(box_below[0])
+                box_locs[box_index] = (box_below[0][0] + 1, box_below[0][1])
+            # Regardless of if there's a box, still move the worker's location down one space
+            worker_loc = (worker_loc[0] + 1, worker_loc[1])
+        elif action == "LEFT":
+            box_left = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
+            if len(box_left) > 0:
+                # Since there is a box to the left of the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it down one space)
+                box_index = box_locs.index(box_left[0])
+                box_locs[box_index] = (box_left[0][0], box_left[0][1] - 1)
+            # Regardless of if there's a box, still move the worker's location down one space
+            worker_loc = (worker_loc[0], worker_loc[1] - 1)
+        elif action == "RIGHT":
+            box_right = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+            if len(box_right) > 0:
+                # Since there is a box to the right of the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it down one space)
+                box_index = box_locs.index(box_right[0])
+                box_locs[box_index] = (box_right[0][0], box_right[0][1] + 1)
+            # Regardless of if there's a box, still move the worker's location down one space
+            worker_loc = (worker_loc[0], worker_loc[1] + 1)
+        
+        state.worker_loc = worker_loc
+        state.box_locs = box_locs
+        return state
     
     def goal_test(self, state):
         """
@@ -174,21 +296,34 @@ class SokobanPuzzle(search.Problem):
 
         The legal move checking system will ensure that the worker is in a legal state
         """
-        raise NotImplementedError
+        return self.warehouse.targets.sort() == state.box_locs.sort()
+
 
     def path_cost(self, c, state1, action, state2):
         """
         Return the cost of using action to travel from state1 to state2, taking into consideration
         the weight of the box and knowing that the cost to move one space is 1.
         """
-        raise NotImplementedError
+        # Determine what has moved between the two states (could be just worker, or worker and box)
+        if state1.worker_loc != state2.worker_loc:
+            c = c + 1
+        if state1.box_locs != state2.box_locs:
+            # Find the index of the box and add the weight of the box as part of the cost, using the index
+            # to identify the cost of the box movement
+            box_moved = [(x,y) for (x,y) in state1.box_locs if (x,y) not in state2.box_locs]
+            box_index = state1.box_locs.index(box_moved[0])
+            c = c + self.warehouse.weights[box_index]
+        return c
+
     
     def value(self, state):
         """For optimization problems, each state has a value.  Hill-climbing
         and related algorithms try to maximize this value.
         
-        IT SEEMS LIKE THIS MIGHT BE THE HEURISTIC WE'RE IMPLEMENTING???
+        This is essentially the heuristic that we'll be using (h function)
         """
+        # Need to take into consideration the distance of the worker from the nearest box (manhattan)
+        # So h(n) = something + dist(worker --> nearest box)
         raise NotImplementedError
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
