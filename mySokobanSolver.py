@@ -42,7 +42,7 @@ def my_team():
     of triplet of the form (student_number, first_name, last_name)
     
     '''
-    return [(10471227, "Zac", "Wolter"), (00000000, "Max", "Spokes"), (00000000, "Sebastian", "Poh")]
+    return [(10471227, "Zac", "Wolter"), (10468439, "Max", "Spokes"), (00000000, "Sebastian", "Poh")]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
