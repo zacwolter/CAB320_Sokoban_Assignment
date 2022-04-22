@@ -113,7 +113,7 @@ def make_cell(cell_type, box_weight = None):
     return canvas
 
 #----------------------------------------------------------------------------
-
+#memes from Seb
 def clear_level():
     '''
     Clear the current warehouse (aka level)    
