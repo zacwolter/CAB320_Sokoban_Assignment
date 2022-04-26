@@ -4,10 +4,13 @@ THIS FILE IS PURELY FOR TESTING PURPOSES ONLY
 Author: Zac :)
 """
 
+import operator
 
-box_locs = [(3,6), (2,6)]
+weights = None
+box_locs = [(3,6), (4,7)]
 worker_loc = (4,6)
 wall_locs = [(1,6), (1,5), (1,7), (1,8), (2,8), (3,8), (4,8), (5,8), (5,7), (5,6), (5,5), (4,5), (3,5)]
+targets = [(4, 2), (4, 4)]
 
 # box_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
 # print(box_above)
@@ -93,14 +96,67 @@ else:
     # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
     legal_moves.append("RIGHT")
 
-print(legal_moves)
+# print(legal_moves)
 
-print(box_locs)
-box_up_index = box_locs.index(box_above[0])
-print(box_up_index)
-box_locs[box_up_index] = (box_above[0][0] + 1, box_above[0][1])
-print(box_locs)
-print(worker_loc)
-worker_loc = (worker_loc[0] + 1, worker_loc[1])
-print(worker_loc)
+# print(box_locs)
+# box_up_index = box_locs.index(box_above[0])
+# print(box_up_index)
+# box_locs[box_up_index] = (box_above[0][0] + 1, box_above[0][1])
+# print(box_locs)
+# print(worker_loc)
+# worker_loc = (worker_loc[0] + 1, worker_loc[1])
+# print(worker_loc)
 
+total = 0
+worker_dist_to_boxes = []
+for (x,y) in box_locs:
+    worker_dist_to_boxes.append((abs(x - worker_loc[0]), abs(y - worker_loc[1])))
+closest_box_to_worker = min(worker_dist_to_boxes)
+total += (closest_box_to_worker[0] + closest_box_to_worker[1])
+print(total)
+
+# # Need to use index() to select each box in descending order
+weights_tracker = weights.copy()
+unclaimed_targets = targets.copy()
+for i in range(len(weights)):
+    highest_weight = 0
+    # Find current highest weight
+    for weight in weights_tracker:
+        if weight > highest_weight:
+            highest_weight = weight
+    # Get index of highest weight
+    highest_weight_index = weights.index(highest_weight)
+    # Remove weight from weights_tracker
+    weights_tracker.remove(highest_weight)
+    # Find the box with that index and then locate the closest unclaimed target
+    current_box = box_locs[highest_weight_index]
+    # Find manhattan distance to each unclaimed target and use smallest value
+    smallest_dist = (10000, 10000)
+    target_index = -1
+    for target in unclaimed_targets:
+        target_index += 1
+        man_dist = tuple(map(operator.sub, current_box, target))
+        man_dist = (abs(man_dist[0]), abs(man_dist[1]))
+        if man_dist < smallest_dist:
+            smallest_dist = man_dist
+    # Smallest distance has been found, add to get total manhattan steps
+    total += (smallest_dist[0] + smallest_dist[1])
+    # Remove claimed target
+    unclaimed_targets.remove(target)
+    print(total)
+
+# unclaimed_targets = targets.copy()
+# target_index = -1
+# for i in range(len(box_locs)):
+#     smallest_dist = (10000, 10000)
+#     for target in unclaimed_targets:
+#         target_index += 1
+#         man_dist = tuple(map(operator.sub, box_locs[i], target))
+#         man_dist = (abs(man_dist[0]), abs(man_dist[1]))
+#         if man_dist < smallest_dist:
+#             smallest_dist = man_dist
+#     # Smallest distance has been found, add to get total manhattan steps
+#     total += (smallest_dist[0] + smallest_dist[1])
+#     # Remove claimed target
+#     unclaimed_targets.remove(target)
+print(total)
