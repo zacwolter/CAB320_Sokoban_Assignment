@@ -74,41 +74,6 @@ def taboo_cells(warehouse):
        and the boxes.  
     '''
 
-    ###
-    # First, understanding what cells are inside the factory:
-    #   Check 1: If a cell is empty AND there has been at least 1 cell that denoted a wall before it,
-    #            then it is inside the warehouse
-    #   Issue 1: All cells outside the warehouse on the right side of the final wall piece will be 
-    #            counted incorrectly as inside
-    #       Example:
-    #
-    #           "      # # # #      "    ==     "x x x # # # # o o o"
-    #
-    #         Where "x" denotes outside and "o" denotes inside
-    #
-    #       BUT:
-    #           When looking at the warehouse .txt files, it appears that no spaces are added after
-    #           the final wall in a line like so:
-    #
-    #           "      # # # #"     ==   "x x x # # # #"
-    #
-    #           Which is correct in identifying what is outside the warehouse
-    #   HENCE Issue 1 is resolved based on the assumption that this occurrence is consistent across all
-    #         warehouse .txt files.
-    #   
-    # Next, understanding how to denote horizontally and vertically adjacent taboo cells
-    #   - We know that all corners that are not targets are taboo cells, and any cells between two corners
-    #     are also taboo cells if none of them are a target
-    #   - To understand if a taboo cell is a corner, all four sides (top, bottom, left and right) need to be
-    #     checked for existing walls... if a cell has at least two walls surrounding it, then it is a corner
-    #       - It is NOT logical to assume that a cell that is adjacent to one wall is part of a set of cells
-    #         between two corners because some walls are standalone or within the confines of the warehouse
-    #   - To find other cells that are taboo (cells that are part of a set of cells between two corners where
-    #     no target cells lie), simply find the enclosing walls (either vertically or horizontally) and check
-    #     if any of the cells between the two walls are targets. If not, then all cells that are enclosed are
-    #     classified as taboo
-    ###
-
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -327,7 +292,8 @@ class SokobanPuzzle(search.Problem):
         # So h(n) = something + dist(worker --> nearest box)
         total = 0
         
-        # Iterate through the boxes, determining the closest box to the worker
+        # Iterate through the boxes, determining the closest box to the worker 
+        """ (that isn't in a target) """
         worker_loc = state.worker_loc
         box_locs = state.box_locs
         differences = []
@@ -343,7 +309,7 @@ class SokobanPuzzle(search.Problem):
         
         # Check if there are any weights, if not, don't take them into consideration
         weights = self.warehouse.weights
-        if len(weights) == 0:
+        if len(weights) == 0: # OR IF ALL WEIGHTS ARE EQUAL:
             for i in range(len(box_locs)):
                 # Find manhattan distance to each unclaimed target and use smallest value
                 unclaimed_targets = targets.copy()

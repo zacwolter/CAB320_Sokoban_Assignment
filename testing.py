@@ -6,7 +6,7 @@ Author: Zac :)
 
 import operator
 
-weights = None
+weights = [5, 5]
 box_locs = [(3,6), (4,7)]
 worker_loc = (4,6)
 wall_locs = [(1,6), (1,5), (1,7), (1,8), (2,8), (3,8), (4,8), (5,8), (5,7), (5,6), (5,5), (4,5), (3,5)]

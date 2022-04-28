@@ -231,7 +231,7 @@ class Warehouse:
     
 if __name__ == "__main__":
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_81.txt")
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
 
     print(wh)   # this calls    wh.__str__()
 
