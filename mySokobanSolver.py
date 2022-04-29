@@ -31,6 +31,7 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # with these files
 import search 
 import sokoban
+import operator
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,6 +74,7 @@ def taboo_cells(warehouse):
        and the boxes.  
     '''
 
+<<<<<<< HEAD
     ###
     # First, understanding what cells are inside the factory:
     #   Check 1: If a cell is empty AND there has been at least 1 cell that denoted a wall before it,
@@ -125,6 +127,8 @@ def taboo_cells(warehouse):
     for i in All_cells:
             
 
+=======
+>>>>>>> 38dc184657171d640aea92efc9844f0eb686a948
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -341,7 +345,73 @@ class SokobanPuzzle(search.Problem):
         """
         # Need to take into consideration the distance of the worker from the nearest box (manhattan)
         # So h(n) = something + dist(worker --> nearest box)
-        raise NotImplementedError
+        total = 0
+        
+        # Iterate through the boxes, determining the closest box to the worker 
+        """ (that isn't in a target) """
+        worker_loc = state.worker_loc
+        box_locs = state.box_locs
+        differences = []
+        for (x,y) in box_locs:
+            differences.append((abs(x - worker_loc[0]), abs(y - worker_loc[1])))
+        worker_dist_to_nearest_box = min(differences)
+
+        # Add the manhattan distance to the total
+        total += (worker_dist_to_nearest_box[0] + worker_dist_to_nearest_box[1])
+
+        # Iterating through the boxes in weight order, determine the minimum distance to an unclaimed target
+        targets = self.warehouse.targets
+        
+        # Check if there are any weights, if not, don't take them into consideration
+        weights = self.warehouse.weights
+        if len(weights) == 0: # OR IF ALL WEIGHTS ARE EQUAL:
+            for i in range(len(box_locs)):
+                # Find manhattan distance to each unclaimed target and use smallest value
+                unclaimed_targets = targets.copy()
+                target_index = -1
+                for i in range(len(box_locs)):
+                    smallest_dist = (10000, 10000)
+                    for target in unclaimed_targets:
+                        target_index += 1
+                        man_dist = tuple(map(operator.sub, box_locs[i], target))
+                        man_dist = (abs(man_dist[0]), abs(man_dist[1]))
+                        if man_dist < smallest_dist:
+                            smallest_dist = man_dist
+                    # Smallest distance has been found, add to get total manhattan steps
+                    total += (smallest_dist[0] + smallest_dist[1])
+                    # Remove claimed target
+                    unclaimed_targets.remove(target)
+        else:
+            # Need to use index() to select each box in descending order by weight
+            weights_tracker = weights.copy()
+            unclaimed_targets = targets.copy()
+            for i in range(len(weights)):
+                highest_weight = 0
+                # Find current highest weight
+                for weight in weights_tracker:
+                    if weight > highest_weight:
+                        highest_weight = weight
+                # Get index of highest weight
+                highest_weight_index = weights.index(highest_weight)
+                # Remove weight from weights_tracker
+                weights_tracker.remove(highest_weight)
+                # Find the box with that index and then locate the closest unclaimed target
+                current_box = box_locs[highest_weight_index]
+                # Find manhattan distance to each unclaimed target and use smallest value
+                smallest_dist = (10000, 10000)
+                target_index = -1
+                for target in unclaimed_targets:
+                    target_index += 1
+                    man_dist = tuple(map(operator.sub, current_box, target))
+                    man_dist = (abs(man_dist[0]), abs(man_dist[1]))
+                    if man_dist < smallest_dist:
+                        smallest_dist = man_dist
+                # Smallest distance has been found, add to get total manhattan steps
+                total += (smallest_dist[0] + smallest_dist[1])
+                # Remove claimed target
+                unclaimed_targets.remove(target)
+
+        return total
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
