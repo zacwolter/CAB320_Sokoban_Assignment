@@ -398,35 +398,36 @@ def check_elem_action_seq(warehouse, action_seq):
     # Where does the action result in the worker being located?
     for action in action_seq:
         if action == 'Left': # Left move
-            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1) 
+            resultant_worker = (warehouse.worker[0] - 1, warehouse.worker[1]) 
         elif action == 'Right': # Right move
-            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1) 
+            resultant_worker = (warehouse.worker[0] + 1, warehouse.worker[1]) 
         elif action == 'Up': # Up move
-            resultant_worker = (warehouse.worker[0] + 1, warehouse.worker[1])
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1)
         else: # Down move
-            resultant_worker = (warehouse.worker[0] - 1, warehouse.worker[1])
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] + 1)
         
         # Check if the action results in the worker hitting a wall (no box considered)
         if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
             return "Impossible"
-
         # Check if the action pushes a box
-        if warehouse.targets.count(resultant_worker) > 0: # Worker's resultant location is the same as a target location (AKA they have pushed a box)
-            box_displacement = resultant_worker - warehouse.worker
+        elif warehouse.targets.count(resultant_worker) > 0: # Worker's resultant location is the same as a target location (AKA they have pushed a box)
+            index_target = warehouse.targets.index(resultant_worker)
 
-            resultant_target = warehouse.target[0] + box_displacement # CHANGE for actual target pushed
+            box_displacement = (resultant_worker[0] - warehouse.worker[0], resultant_worker[1] - warehouse.worker[1])
+
+            resultant_target = (warehouse.targets[index_target][0] + box_displacement[0], warehouse.targets[index_target][1] + box_displacement[1]) # CHANGE for actual target pushed
 
             # Check if the action pushes a box into a wall
             if warehouse.walls.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
                 return "Impossible"
-
             # Check if the action pushes a box into another box
-            if warehouse.targets.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
+            elif warehouse.targets.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
                 return "Impossible"
-
-        # Action deemed legal and so the move will be updated in warehouse.__str__
-        # CODE TO BE WRITTEN to do this ^
-
+            else: # Action deemed legal so worker and target are moved
+                warehouse.targets[0] = resultant_target
+                warehouse.worker = resultant_worker
+        else: # Action deemed legal and worker is moved
+            warehouse.worker = resultant_worker
     
     '''
     
@@ -450,12 +451,7 @@ def check_elem_action_seq(warehouse, action_seq):
                A string representing the state of the puzzle after applying
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
-    '''
-     
-    print(warehouse.__str__())
-    
 
-    '''
     ARCHIVE
 
         # Represent warehouse as a 2D binary array to allow for illegal action
@@ -464,9 +460,7 @@ def check_elem_action_seq(warehouse, action_seq):
         print(binWH)
 
     '''
-
-    raise NotImplementedError()
-
+    return warehouse.__str__()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
