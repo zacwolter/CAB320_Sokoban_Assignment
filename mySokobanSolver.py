@@ -395,11 +395,6 @@ class SokobanPuzzle(search.Problem):
 
 def check_elem_action_seq(warehouse, action_seq):
 
-    # Represent warehouse as a 2D binary array to allow for illegal action
-    # checking to be computed easier/faster. 
-    # binWH = [[0]*warehouse.ncols]*warehouse.nrows 
-    # print(binWH)
-
     # Where does the action result in the worker being located?
     for action in action_seq:
         if action == 'Left': # Left move
@@ -415,17 +410,23 @@ def check_elem_action_seq(warehouse, action_seq):
         if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
             return "Impossible"
 
-        # Check if the action pushes a box into a wall
+        # Check if the action pushes a box
         if warehouse.targets.count(resultant_worker) > 0: # Worker's resultant location is the same as a target location (AKA they have pushed a box)
             box_displacement = resultant_worker - warehouse.worker
 
             resultant_target = warehouse.target[0] + box_displacement # CHANGE for actual target pushed
 
+            # Check if the action pushes a box into a wall
             if warehouse.walls.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
                 return "Impossible"
 
+            # Check if the action pushes a box into another box
+            if warehouse.targets.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
+                return "Impossible"
+
         # Action deemed legal and so the move will be updated in warehouse.__str__
-        
+        # CODE TO BE WRITTEN to do this ^
+
     
     '''
     
@@ -452,7 +453,18 @@ def check_elem_action_seq(warehouse, action_seq):
     '''
      
     print(warehouse.__str__())
-    a = 1
+    
+
+    '''
+    ARCHIVE
+
+        # Represent warehouse as a 2D binary array to allow for illegal action
+        # checking to be computed easier/faster. 
+        binWH = [[0]*warehouse.ncols]*warehouse.nrows 
+        print(binWH)
+
+    '''
+
     raise NotImplementedError()
 
 
