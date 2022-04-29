@@ -33,7 +33,6 @@ import search
 import sokoban
 import operator
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -395,8 +394,42 @@ class SokobanPuzzle(search.Problem):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def check_elem_action_seq(warehouse, action_seq):
+
+    # Represent warehouse as a 2D binary array to allow for illegal action
+    # checking to be computed easier/faster. 
+    # binWH = [[0]*warehouse.ncols]*warehouse.nrows 
+    # print(binWH)
+
+    # Where does the action result in the worker being located?
+    for action in action_seq:
+        if action == 'Left': # Left move
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1) 
+        elif action == 'Right': # Right move
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1) 
+        elif action == 'Up': # Up move
+            resultant_worker = (warehouse.worker[0] + 1, warehouse.worker[1])
+        else: # Down move
+            resultant_worker = (warehouse.worker[0] - 1, warehouse.worker[1])
+        
+        # Check if the action results in the worker hitting a wall (no box considered)
+        if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
+            return "Impossible"
+
+        # Check if the action pushes a box into a wall
+        if warehouse.targets.count(resultant_worker) > 0: # Worker's resultant location is the same as a target location (AKA they have pushed a box)
+            box_displacement = resultant_worker - warehouse.worker
+
+            resultant_target = warehouse.target[0] + box_displacement # CHANGE for actual target pushed
+
+            if warehouse.walls.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
+                return "Impossible"
+
+        # Action deemed legal and so the move will be updated in warehouse.__str__
+        
+    
     '''
     
+
     Determine if the sequence of actions listed in 'action_seq' is legal or not.
     
     Important notes:
@@ -417,9 +450,9 @@ def check_elem_action_seq(warehouse, action_seq):
                the sequence of actions.  This must be the same string as the
                string returned by the method  Warehouse.__str__()
     '''
-    
-    ##         "INSERT YOUR CODE HERE"
-    
+     
+    print(warehouse.__str__())
+    a = 1
     raise NotImplementedError()
 
 

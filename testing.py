@@ -4,6 +4,9 @@ THIS FILE IS PURELY FOR TESTING PURPOSES ONLY
 Author: Zac :)
 """
 
+
+
+""""
 import operator
 
 weights = None
@@ -160,3 +163,4 @@ for i in range(len(weights)):
 #     # Remove claimed target
 #     unclaimed_targets.remove(target)
 print(total)
+"""
