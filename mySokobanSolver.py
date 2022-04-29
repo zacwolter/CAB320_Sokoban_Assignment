@@ -107,6 +107,23 @@ def taboo_cells(warehouse):
     #     if any of the cells between the two walls are targets. If not, then all cells that are enclosed are
     #     classified as taboo
     ###
+    #The rules identified from research are:
+    # Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
+    #  Rule 2: all cells between two corners along a wall are taboo if none of 
+    #          these cells is a target.
+
+
+
+    #Therefore now trying to meet these rules 
+    corner_Taboo=[] #corner taboo cells 
+    in_between_cells=[]#Cells that are made taboo cells between corner taboo cells 
+    #Now as we are trying to identify what is a wall, boxes, goal and character which are 
+    #identified by #,$,'.' and @ respectively
+    #Therefore the best way to identify these is converting the input warehouse object into a string
+    All_cells=str(warehouse).split
+    no_of_cells=0
+    for i in All_cells:
+            
 
     raise NotImplementedError()
 
