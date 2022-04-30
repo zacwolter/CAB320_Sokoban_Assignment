@@ -394,6 +394,31 @@ class SokobanPuzzle(search.Problem):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def check_elem_action_seq(warehouse, action_seq):
+    '''
+     check_elem_actions determines whether a sequence of actions are legal or not
+     within a given warehouse. Actions are deemed illegal if they:
+
+        -  Cause the worker to hit a wall
+        -  Cause the worker to push a box into a wall
+        -  Cause the worker to push a box into another box
+
+    @param 
+     warehouse: a valid Warehouse object
+
+    @return
+    
+        If puzzle cannot be solved 
+            return 'Impossible', None
+        
+        If a solution was found, 
+            return S, C 
+            where S is a list of actions that solves
+            the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
+            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
+            If the puzzle is already in a goal state, simply return []
+            C is the total cost of the action sequence C
+
+    '''
 
     # Where does the action result in the worker being located?
     for action in action_seq:
