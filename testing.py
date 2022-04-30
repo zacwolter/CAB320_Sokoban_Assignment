@@ -19,6 +19,10 @@ answer = check_elem_action_seq(wh, ['Up', 'Right', 'Right', 'Down', 'Up', 'Left'
 print('<<  check_elem_action_seq, test 4>>')
 print(wh.__str__())
 
+box_locs = [(3,6), (2,6)]
+worker_loc = (4,6)
+wall_locs = [(1,6), (1,5), (1,7), (1,8), (2,8), (3,8), (4,8), (5,8), (5,7), (5,6), (5,5), (4,5), (3,5)]
+
 
 
 # weights = None
@@ -174,3 +178,14 @@ print(wh.__str__())
 # #     # Remove claimed target
 # #     unclaimed_targets.remove(target)
 # print(total)
+print(legal_moves)
+
+print(box_locs)
+box_up_index = box_locs.index(box_above[0])
+print(box_up_index)
+box_locs[box_up_index] = (box_above[0][0] + 1, box_above[0][1])
+print(box_locs)
+print(worker_loc)
+worker_loc = (worker_loc[0] + 1, worker_loc[1])
+print(worker_loc)
+
