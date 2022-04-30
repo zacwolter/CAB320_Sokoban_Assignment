@@ -148,7 +148,7 @@ def taboo_cells(warehouse):
                 #first we can look at it as if we have reached the natural limits of the array containing
                 #the layout of the working area, therefore
                 if row_index==0 or row_index==len(All_cells)-1 or column==0 or column==len(All_cells[row_index])-1 or cell_Inner==0:
-                    All_cells[column][row_index]=value
+                    All_cells[row_index][column]=value
                 else:
                     left_top_taboo= ab[row_index-1][column]=="#" and ab[row_index][column-1]=='#' #will generate a 1 or zero
                     right_top_taboo= ab[row_index-1][column]=="#" and ab[row_index][column+1]=='#'#checks top right
