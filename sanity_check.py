@@ -42,27 +42,50 @@ def test_taboo_cells():
         
 def test_check_elem_action_seq():
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
-    # first test
-    answer = check_elem_action_seq(wh, ['Right', 'Right','Down'])
-    expected_answer = '####  \n# .#  \n#  ###\n#*   #\n#  $@#\n#  ###\n####  '
-    print('<<  check_elem_action_seq, test 1>>')
-    if answer==expected_answer:
-        print('Test 1 passed!  :-)\n')
-    else:
-        print('Test 1 failed!  :-(\n')
-        print('Expected ');print(expected_answer)
-        print('But, received ');print(answer)
-    # second test
-    answer = check_elem_action_seq(wh, ['Right', 'Right','Right'])
-    expected_answer = 'Impossible'
-    print('<<  check_elem_action_seq, test 2>>')
-    if answer==expected_answer:
-        print('Test 2 passed!  :-)\n')
-    else:
-        print('Test 2 failed!  :-(\n')
-        print('Expected ');print(expected_answer)
-        print('But, received ');print(answer)
+    # wh.load_warehouse("./warehouses/warehouse_01.txt")
+    # # first test - legal actions
+    # answer = check_elem_action_seq(wh, ['Right', 'Right','Down'])
+    # expected_answer = '####  \n# .#  \n#  ###\n#*   #\n#  $@#\n#  ###\n####  '
+    # print('<<  check_elem_action_seq, test 1>>')
+    # if answer==expected_answer:
+    #     print('Test 1 passed!  :-)\n')
+    # else:
+    #     print('Test 1 failed!  :-(\n')
+    #     print('Expected ');print(expected_answer)
+    #     print('But, received ');print(answer)
+    # # second test - worker colides with a wall
+    # answer = check_elem_action_seq(wh, ['Right', 'Right','Right'])
+    # expected_answer = 'Impossible'
+    # print('<<  check_elem_action_seq, test 2>>')
+    # if answer==expected_answer:
+    #     print('Test 2 passed!  :-)\n')
+    # else:
+    #     print('Test 2 failed!  :-(\n')
+    #     print('Expected ');print(expected_answer)
+    #     print('But, received ');print(answer)
+    # # third test - box pushes another box
+    # wh.load_warehouse("./warehouses/warehouse_03.txt")
+    # answer = check_elem_action_seq(wh, ['Up'])
+    # expected_answer = 'Impossible'
+    # print('<<  check_elem_action_seq, test 3>>')
+    # if answer==expected_answer:
+    #     print('Test 3 passed!  :-)\n')
+    # else:
+    #     print('Test 3 failed!  :-(\n')
+    #     print('Expected ');print(expected_answer)
+    #     print('But, received ');print(answer)
+    wh.load_warehouse("./warehouses/warehouse_09.txt")
+    answer = check_elem_action_seq(wh, ['Up', 'Right', 'Right', 'Down', 'Up', 'Left', 'Left',
+                                        'Down', 'Right', 'Down', 'Right', 'Left', 'Up', 'Up',
+                                        'Right', 'Down', 'Right', 'Down', 'Down', 'Left',
+                                        'Up', 'Right', 'Up', 'Left', 'Down', 'Left', 'Up', 
+                                        'Right', 'Up', 'Left'])
+    print('<<check_elem_action_seq, test 4>>')
+    print('<<Start>>')
+    print(wh.__str__())
+    print('<<End>>')
+    print(answer)
+
 
 
 

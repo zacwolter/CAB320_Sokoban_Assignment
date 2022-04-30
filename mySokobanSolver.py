@@ -410,56 +410,25 @@ def check_elem_action_seq(warehouse, action_seq):
         if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
             return "Impossible"
         # Check if the action pushes a box
-        elif warehouse.targets.count(resultant_worker) > 0: # Worker's resultant location is the same as a target location (AKA they have pushed a box)
-            index_target = warehouse.targets.index(resultant_worker)
+        elif warehouse.boxes.count(resultant_worker) > 0: # Worker's resultant location is the same as a box location (AKA they have pushed a box)
+            index_box = warehouse.boxes.index(resultant_worker)
 
             box_displacement = (resultant_worker[0] - warehouse.worker[0], resultant_worker[1] - warehouse.worker[1])
 
-            resultant_target = (warehouse.targets[index_target][0] + box_displacement[0], warehouse.targets[index_target][1] + box_displacement[1]) # CHANGE for actual target pushed
+            resultant_box = (warehouse.boxes[index_box][0] + box_displacement[0], warehouse.boxes[index_box][1] + box_displacement[1])
 
             # Check if the action pushes a box into a wall
-            if warehouse.walls.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
+            if warehouse.walls.count(resultant_box) > 0: # Box's resultant location is the same as a wall location
                 return "Impossible"
             # Check if the action pushes a box into another box
-            elif warehouse.targets.count(resultant_target) > 0: # Target's resultant location is the same as a wall location
+            elif warehouse.boxes.count(resultant_box) > 0: # Box's resultant location is the same as a wall location
                 return "Impossible"
-            else: # Action deemed legal so worker and target are moved
-                warehouse.targets[0] = resultant_target
+            else: # Action deemed legal so worker and box are moved
+                warehouse.boxes[index_box] = resultant_box
                 warehouse.worker = resultant_worker
         else: # Action deemed legal and worker is moved
             warehouse.worker = resultant_worker
-    
-    '''
-    
 
-    Determine if the sequence of actions listed in 'action_seq' is legal or not.
-    
-    Important notes:
-      - a legal sequence of actions does not necessarily solve the puzzle.
-      - an action is legal even if it pushes a box onto a taboo cell.
-        
-    @param warehouse: a valid Warehouse object
-
-    @param action_seq: a sequence of legal actions.
-           For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
-           
-    @return
-        The string 'Impossible', if one of the action was not valid.
-           For example, if the agent tries to push two boxes at the same time,
-                        or push a box into a wall.
-        Otherwise, if all actions were successful, return                 
-               A string representing the state of the puzzle after applying
-               the sequence of actions.  This must be the same string as the
-               string returned by the method  Warehouse.__str__()
-
-    ARCHIVE
-
-        # Represent warehouse as a 2D binary array to allow for illegal action
-        # checking to be computed easier/faster. 
-        binWH = [[0]*warehouse.ncols]*warehouse.nrows 
-        print(binWH)
-
-    '''
     return warehouse.__str__()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
