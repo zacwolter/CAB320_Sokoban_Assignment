@@ -142,7 +142,7 @@ def taboo_cells(warehouse):
                         cell_Inner=0
                 All_cells[row_index][column]=="#"
             elif value==".":
-                targets.append(row_index,column) #store the location of the target for future use
+                targets.append((row_index,column)) #store the location of the target for future use
             else:
                 #check if space is within the working area and at the corners
                 #first we can look at it as if we have reached the natural limits of the array containing
