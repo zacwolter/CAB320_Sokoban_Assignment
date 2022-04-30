@@ -115,6 +115,7 @@ def taboo_cells(warehouse):
     #Therefore now trying to meet these rules 
     corner_Taboo=[] #corner taboo cells 
     in_between_cells=[]#Cells that are made taboo cells between corner taboo cells 
+    taboo_cells_string=[]
     #Now as we are trying to identify what is a wall, boxes, goal and character which are 
     #identified by #,$,'.' and @ respectively
     #Therefore the best way to identify these is converting the input warehouse object into a string
@@ -131,17 +132,17 @@ def taboo_cells(warehouse):
         cell_Inner=0#set the starting default case for all cells overlooked to be outside
         #the working area #column here is essentially column index
         for column,value in enumerate(row_value):
-            if value=="@" or value=="." or value=="$":
+            if value=='@' or value=='.' or value=='$' or value=='*':
                 All_cells[row_index][column]=" " #set that the worker, box or target will be working area
                 #set that the function knows now that we know the counter is in working area
                 cell_Inner=1
-            if value=="#":
+            if value=='#':
                 cell_Inner=1 #set that the function knows now that we know the counter is in working area
                 for index in range(column):
-                    if All_cells[row_index][index]=="#":
+                    if All_cells[row_index][index]=='#':
                         cell_Inner=0
-                All_cells[row_index][column]=="#"
-            elif value==".":
+                All_cells[row_index][column]=='#'
+            elif value=='.':
                 targets.append((row_index,column)) #store the location of the target for future use
             else:
                 #check if space is within the working area and at the corners
@@ -150,10 +151,10 @@ def taboo_cells(warehouse):
                 if row_index==0 or row_index==len(All_cells)-1 or column==0 or column==len(All_cells[row_index])-1 or cell_Inner==0:
                     All_cells[row_index][column]=value
                 else:
-                    left_top_taboo= ab[row_index-1][column]=="#" and ab[row_index][column-1]=='#' #will generate a 1 or zero
-                    right_top_taboo= ab[row_index-1][column]=="#" and ab[row_index][column+1]=='#'#checks top right
-                    left_bot_taboo= ab[row_index+1][column]=="#" and ab[row_index][column-1]=='#'
-                    right_bot_taboo= ab[row_index+1][column]=="#" and ab[row_index][column+1]=='#'
+                    left_top_taboo= ab[row_index-1][column]=='#' and ab[row_index][column-1]=='#' #will generate a 1 or zero
+                    right_top_taboo= ab[row_index-1][column]=='#' and ab[row_index][column+1]=='#'#checks top right
+                    left_bot_taboo= ab[row_index+1][column]=='#' and ab[row_index][column-1]=='#'
+                    right_bot_taboo= ab[row_index+1][column]=='#' and ab[row_index][column+1]=='#'
                     if left_top_taboo==1 or right_top_taboo==1 or left_bot_taboo==1 or right_bot_taboo==1:
                         All_cells[row_index][column]="X"#set as taboo cell
                         #store this taboo cell into a variable  
@@ -167,11 +168,11 @@ def taboo_cells(warehouse):
     Taboo=False #set a boolean variable to determine if the taboo cells connected between corners
     #are actually taboo cells top left corners
     for z in corner_Taboo:
-        if All_cells[z[0]][z[1]-1]=="#" and All_cells[z[0]-1][z[1]]=="#":
+        if All_cells[z[0]][z[1]-1]=='#' and All_cells[z[0]-1][z[1]]=='#':
             vertical=z[0]+1 #go downward 
             horizontal=z[1]+1#go sideward, but start 1 tile to the right of corner
             #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != "#":
+            while All_cells[vertical][z[1]] != '#':
                 #keep going down vertically until a wall is reached storing these cells as taboo cells
                 rule2Taboo.append((vertical,z[1]))
                 vertical+=1
@@ -179,7 +180,7 @@ def taboo_cells(warehouse):
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]-1]!="#":
+                    if All_cells[X_rule2[0]][X_rule2[1]-1]!='#':
                         Taboo=False
                     if X_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -191,14 +192,14 @@ def taboo_cells(warehouse):
                 Taboo=False
             #get all cells that are to the right of the corner 
             rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != "#": #take the current iteration row index/value from z and continue rightward with horizontal
+            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
                 rule2Taboo.append((z[0],horizontal))
                 horizontal+=1
             #check if there are other cells within this 
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!="#":
+                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!='#':
                         Taboo=False
                     if Y_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -213,11 +214,11 @@ def taboo_cells(warehouse):
 
         #now focus on top right corner taboo cells SECTION 2/4 
         #Basically the same as before 
-        if All_cells[z[0]][z[1]+1]=="#" and All_cells[z[0]-1][z[1]]=="#":
+        if All_cells[z[0]][z[1]+1]=='#' and All_cells[z[0]-1][z[1]]=='#':
             vertical=z[0]+1 #go downward 
             horizontal=z[1]-1#go sideward, but start 1 tile to the left of corner
             #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != "#":
+            while All_cells[vertical][z[1]] != '#':
                 #keep going down vertically until a wall is reached storing these cells as taboo cells
                 rule2Taboo.append((vertical,z[1]))
                 vertical+=1
@@ -225,7 +226,7 @@ def taboo_cells(warehouse):
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]+1]!="#":
+                    if All_cells[X_rule2[0]][X_rule2[1]+1]!='#':
                         Taboo=False
                     if X_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -237,14 +238,14 @@ def taboo_cells(warehouse):
                 Taboo=False
             #get all cells that are to the right of the corner 
             rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != "#": #take the current iteration row index/value from z and continue rightward with horizontal
+            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
                 rule2Taboo.append((z[0],horizontal))
                 horizontal-=1
             #check if there are other cells within this 
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!="#":
+                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!='#':
                         Taboo=False
                     if Y_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -259,11 +260,11 @@ def taboo_cells(warehouse):
 
             #now focus on bottom left corner taboo cells SECTION 3/4 
             #Basically the same as before 
-        if All_cells[z[0]][z[1]-1]=="#" and All_cells[z[0]+1][z[1]]=="#":
+        if All_cells[z[0]][z[1]-1]=='#' and All_cells[z[0]+1][z[1]]=='#':
             vertical=z[0]-1 #go upward 
             horizontal=z[1]+1#go sideward, but start 1 tile to the right of corner
             #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != "#":
+            while All_cells[vertical][z[1]] != '#':
                 #keep going down vertically until a wall is reached storing these cells as taboo cells
                 rule2Taboo.append((vertical,z[1]))
                 vertical-=1
@@ -271,7 +272,7 @@ def taboo_cells(warehouse):
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]-1]!="#":
+                    if All_cells[X_rule2[0]][X_rule2[1]-1]!='#':
                         Taboo=False
                     if X_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -283,14 +284,14 @@ def taboo_cells(warehouse):
                 Taboo=False
             #get all cells that are to the right of the corner 
             rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != "#": #take the current iteration row index/value from z and continue rightward with horizontal
+            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
                 rule2Taboo.append((z[0],horizontal))
                 horizontal+=1
             #check if there are other cells within this 
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!="#":
+                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!='#':
                         Taboo=False
                     if Y_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -305,11 +306,11 @@ def taboo_cells(warehouse):
 
             #now focus on bottom right corner taboo cells SECTION 4/4 
             #Basically the same as before 
-        if All_cells[z[0]][z[1]+1]=="#" and All_cells[z[0]+1][z[1]]=="#":
+        if All_cells[z[0]][z[1]+1]=='#' and All_cells[z[0]+1][z[1]]=='#':
             vertical=z[0]-1 #go upward 
             horizontal=z[1]-1#go sideward, but start 1 tile to the left of corner
             #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != "#":
+            while All_cells[vertical][z[1]] != '#':
                 #keep going down vertically until a wall is reached storing these cells as taboo cells
                 rule2Taboo.append((vertical,z[1]))
                 vertical-=1
@@ -317,7 +318,7 @@ def taboo_cells(warehouse):
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]+1]!="#":
+                    if All_cells[X_rule2[0]][X_rule2[1]+1]!='#':
                         Taboo=False
                     if X_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -329,14 +330,14 @@ def taboo_cells(warehouse):
                 Taboo=False
             #get all cells that are to the right of the corner 
             rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != "#": #take the current iteration row index/value from z and continue rightward with horizontal
+            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
                 rule2Taboo.append((z[0],horizontal))
                 horizontal-=1
             #check if there are other cells within this 
             if rule2Taboo[-1] in corner_Taboo:
                 Taboo=True
                 for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!="#":
+                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!='#':
                         Taboo=False
                     if Y_rule2 in targets:
                         Taboo=False #so if any of the tiles in the sides of the workspace are targets 
@@ -347,10 +348,12 @@ def taboo_cells(warehouse):
                 Taboo=False
             rule2Taboo=[]
     for deez in in_between_cells:
-        All_cells[deez[0]][deez[1]]="X"
+        All_cells[deez[0]][deez[1]]='X'
     #All_cells=All_cells[1:]
     for rows in All_cells:
-        taboo_cells_string = "\n".join(rows)
+        print(rows)
+        #taboo_cells_string += "\n"
+        #taboo_cells_string += ''.join(rows)
 
     return taboo_cells_string
 
