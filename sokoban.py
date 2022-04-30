@@ -17,6 +17,8 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 import operator
 import functools
 
+from mySokobanSolver import check_elem_action_seq
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #                           UTILS
@@ -232,6 +234,10 @@ class Warehouse:
 if __name__ == "__main__":
     wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
+
+    action_seq = ["left", "up", "down"]
+
+    check_elem_action_seq(wh,action_seq)
 
     print(wh)   # this calls    wh.__str__()
 

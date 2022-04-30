@@ -33,7 +33,6 @@ import search
 import sokoban
 import operator
 
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -658,32 +657,66 @@ class SokobanPuzzle(search.Problem):
 
 def check_elem_action_seq(warehouse, action_seq):
     '''
-    
-    Determine if the sequence of actions listed in 'action_seq' is legal or not.
-    
-    Important notes:
-      - a legal sequence of actions does not necessarily solve the puzzle.
-      - an action is legal even if it pushes a box onto a taboo cell.
-        
-    @param warehouse: a valid Warehouse object
+     check_elem_actions determines whether a sequence of actions are legal or not
+     within a given warehouse. Actions are deemed illegal if they:
 
-    @param action_seq: a sequence of legal actions.
-           For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
-           
+        -  Cause the worker to hit a wall
+        -  Cause the worker to push a box into a wall
+        -  Cause the worker to push a box into another box
+
+    @param 
+     warehouse: a valid Warehouse object
+
     @return
-        The string 'Impossible', if one of the action was not valid.
-           For example, if the agent tries to push two boxes at the same time,
-                        or push a box into a wall.
-        Otherwise, if all actions were successful, return                 
-               A string representing the state of the puzzle after applying
-               the sequence of actions.  This must be the same string as the
-               string returned by the method  Warehouse.__str__()
-    '''
     
-    ##         "INSERT YOUR CODE HERE"
-    
-    raise NotImplementedError()
+        If puzzle cannot be solved 
+            return 'Impossible', None
+        
+        If a solution was found, 
+            return S, C 
+            where S is a list of actions that solves
+            the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
+            For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
+            If the puzzle is already in a goal state, simply return []
+            C is the total cost of the action sequence C
 
+    '''
+
+    # Where does the action result in the worker being located?
+    for action in action_seq:
+        if action == 'Left': # Left move
+            resultant_worker = (warehouse.worker[0] - 1, warehouse.worker[1]) 
+        elif action == 'Right': # Right move
+            resultant_worker = (warehouse.worker[0] + 1, warehouse.worker[1]) 
+        elif action == 'Up': # Up move
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1)
+        else: # Down move
+            resultant_worker = (warehouse.worker[0], warehouse.worker[1] + 1)
+        
+        # Check if the action results in the worker hitting a wall (no box considered)
+        if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
+            return "Impossible"
+        # Check if the action pushes a box
+        elif warehouse.boxes.count(resultant_worker) > 0: # Worker's resultant location is the same as a box location (AKA they have pushed a box)
+            index_box = warehouse.boxes.index(resultant_worker)
+
+            box_displacement = (resultant_worker[0] - warehouse.worker[0], resultant_worker[1] - warehouse.worker[1])
+
+            resultant_box = (warehouse.boxes[index_box][0] + box_displacement[0], warehouse.boxes[index_box][1] + box_displacement[1])
+
+            # Check if the action pushes a box into a wall
+            if warehouse.walls.count(resultant_box) > 0: # Box's resultant location is the same as a wall location
+                return "Impossible"
+            # Check if the action pushes a box into another box
+            elif warehouse.boxes.count(resultant_box) > 0: # Box's resultant location is the same as a wall location
+                return "Impossible"
+            else: # Action deemed legal so worker and box are moved
+                warehouse.boxes[index_box] = resultant_box
+                warehouse.worker = resultant_worker
+        else: # Action deemed legal and worker is moved
+            warehouse.worker = resultant_worker
+
+    return warehouse.__str__()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 

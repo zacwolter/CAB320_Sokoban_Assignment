@@ -43,7 +43,7 @@ def test_taboo_cells():
 def test_check_elem_action_seq():
     wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_01.txt")
-    # first test
+    # first test - legal actions
     answer = check_elem_action_seq(wh, ['Right', 'Right','Down'])
     expected_answer = '####  \n# .#  \n#  ###\n#*   #\n#  $@#\n#  ###\n####  '
     print('<<  check_elem_action_seq, test 1>>')
@@ -53,7 +53,7 @@ def test_check_elem_action_seq():
         print('Test 1 failed!  :-(\n')
         print('Expected ');print(expected_answer)
         print('But, received ');print(answer)
-    # second test
+    # second test - worker colides with a wall
     answer = check_elem_action_seq(wh, ['Right', 'Right','Right'])
     expected_answer = 'Impossible'
     print('<<  check_elem_action_seq, test 2>>')
@@ -63,7 +63,6 @@ def test_check_elem_action_seq():
         print('Test 2 failed!  :-(\n')
         print('Expected ');print(expected_answer)
         print('But, received ');print(answer)
-
 
 
 def test_solve_weighted_sokoban():
@@ -94,6 +93,6 @@ if __name__ == "__main__":
     pass    
 #    print(my_team())  # should print your team
 
-    test_taboo_cells() 
-    #test_check_elem_action_seq()
+    #test_taboo_cells() 
+    test_check_elem_action_seq()
     #test_solve_weighted_sokoban()
