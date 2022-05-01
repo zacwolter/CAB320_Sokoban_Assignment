@@ -718,21 +718,20 @@ def solve_weighted_sokoban(warehouse):
     Method:
     - If boxes in targets return S = [], C = 0 
     - solve sokoban with problem class
-        - initialise Problem class (warehouse)
         - call astar_graph_search
+        - calculate path_cost
     - return S and C
 
 
     '''
 
     if warehouse.__str__().count(".") == 0: # boxes are already on targets
-        S = []
-        C = 0
-        return S, C
+        return [], 0
     else: # puzzle needs to be solved
         sokoban_puzzle = SokobanPuzzle(warehouse)
-        S = search.astar_graph_search(sokoban_puzzle, sokoban_puzzle.value())
-        C = sokoban_puzzle.path_cost()
+        heuristic = sokoban_puzzle.value(warehouse)
+        S = search.astar_graph_search(problem = sokoban_puzzle, h = heuristic)
+        C = sokoban_puzzle.path_cost() # missing arguments
         return S, C
 
 
