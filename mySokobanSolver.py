@@ -697,15 +697,15 @@ def solve_weighted_sokoban(warehouse):
     This function analyses the given warehouse.
     It returns the two items. The first item is an action sequence solution. 
     The second item is the total cost of this action sequence.
-    
+
     @param 
      warehouse: a valid Warehouse object
 
     @return
-    
+
         If puzzle cannot be solved
             return 'Impossible', None
-        
+
         If a solution was found,
             return S, C 
             where S is a list of actions that solves
@@ -714,22 +714,26 @@ def solve_weighted_sokoban(warehouse):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
-    
+
     Method:
     - If boxes in targets return S = [], C = 0 
-    - Label taboo cells
     - solve sokoban with problem class
         - initialise Problem class (warehouse)
         - call astar_graph_search
-    - check_elem_seq
     - return S and C
-    
-    
+
+
     '''
-    
 
-
-    raise NotImplementedError()
+    if warehouse.str().count(".") == 0: # boxes are already on targets
+        S = []
+        C = 0
+        return S, C
+    else: # puzzle needs to be solved
+        sokoban_puzzle = SokobanPuzzle(warehouse)
+        S = search.astar_graph_search(sokoban_puzzle, SokobanPuzzle.value()) 
+        C = sokoban_puzzle.path_cost()
+        return S, C
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
