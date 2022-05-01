@@ -10,7 +10,7 @@ import operator
 
 wh = Warehouse()
 # forth test - complete legal solve
-wh.load_warehouse("./warehouses/warehouse_143.txt")
+wh.load_warehouse("./warehouses/warehouse_03.txt")
 answer = check_elem_action_seq(wh, ['Up', 'Right', 'Right', 'Down', 'Up', 'Left', 'Left',
                                     'Down', 'Right', 'Down', 'Right', 'Left', 'Up', 'Up',
                                     'Right', 'Down', 'Right', 'Down', 'Down', 'Left',
@@ -192,7 +192,7 @@ num_rows = 9
 # print(worker_loc)
 
 wh = Warehouse()
-wh.load_warehouse("./warehouses/warehouse_81.txt")
+wh.load_warehouse("./warehouses/warehouse_03.txt")
 wall_locs = wh.walls
 
 # wall_locs.append((1,3))
@@ -353,7 +353,7 @@ current_row = 0
 prev_row = 0
 for tb_cell in tb_cell_tracker:
     prev_row = current_row
-    current_row = tb_cell[0]
+    current_row = tb_cell[1]
     if current_row == prev_row:
         continue
     tb_cell_same_row = [cell for cell in tb_cells if tb_cell[1] == cell[1]]
@@ -441,6 +441,14 @@ for tb_cell in tb_cell_tracker:
                         tb_cells.append(cell)
                         tb_cells.sort()
         
+    X,Y = zip(*wall_locs) # pythonic version of the above
+    x_size, y_size = 1+max(X), 1+max(Y)
     
-
-print(tb_cells)
+    vis = [[" "] * x_size for y in range(y_size)]
+    # can't use  vis = [" " * x_size for y ...]
+    # because we want to change the characters later
+    for (x,y) in wall_locs:
+        vis[y][x] = "#"
+    for (x,y) in tb_cells:
+        vis[y][x] = "X"
+    print("\n".join(["".join(line) for line in vis]))

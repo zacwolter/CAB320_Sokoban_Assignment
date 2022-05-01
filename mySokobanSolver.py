@@ -72,11 +72,6 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.  
     '''
-
-    #The rules identified from research are:
-    # Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
-    #  Rule 2: all cells between two corners along a wall are taboo if none of 
-    #          these cells is a target.
     
     #The rules identified from research are:
     # Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
@@ -86,8 +81,6 @@ def taboo_cells(warehouse):
     # Gather all necessary information from the warehouse (walls and target locations)
     wall_locs = warehouse.walls
     target_locs = warehouse.targets
-    interior_spaces = []
-    num_rows = warehouse.nrows
     num_cols = warehouse.ncols
 
     # Rule 1: Cells that are not targets and are surrounded by walls are taboo
@@ -105,36 +98,251 @@ def taboo_cells(warehouse):
             continue
         current_row = i
         walls_in_row = [(x,y) for (x,y) in wall_locs if x == i]
+        walls_in_row.sort()
         first_wall_in_row = walls_in_row[0]
         last_wall_in_row = walls_in_row[-1]
         empty_spaces_inside_row = [(current_row,y) for y in range(first_wall_in_row[1], last_wall_in_row[1]+1) 
                                 if (current_row,y) not in walls_in_row]
         empty_spaces_inside.append(empty_spaces_inside_row)
-    
+
     # Now check Rule 1 - check if each free space is a corner and not a target
-    for space in empty_spaces_inside:
-        if space in target_locs:
-            # Ignore targets, they cannot be taboo cells
+    for row in empty_spaces_inside:
+        for space in row:
+            if space in target_locs:
+                # Ignore targets, they cannot be taboo cells
+                continue
+            
+            num_surrounding_walls = 0
+            surrounding_sides = []
+            # Check for at least two walls surrounding the current cell (above, below, left or right)
+            # If surrounding cells are opposite sides and only two cells surrounding, then NOT taboo
+            # ABOVE
+            if (space[0]-1, space[1]) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("ABOVE")
+            # BELOW
+            if (space[0]+1, space[1]) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("BELOW")
+            # LEFT
+            if (space[0], space[1]-1) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("LEFT")
+            # RIGHT
+            if (space[0], space[1]+1) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("RIGHT")
+            
+            if num_surrounding_walls == 2:
+                if "ABOVE" in surrounding_sides and "BELOW" in surrounding_sides:
+                    # IGNORE as box can pass through
+                    pass
+                elif "LEFT" in surrounding_sides and "RIGHT" in surrounding_sides:
+                    # IGNORE as box can pass through
+                    pass
+                else:
+                    tb_cells.append(space)
+            elif num_surrounding_walls > 2:
+                tb_cells.append(space)
+
+    # Now check Rule 2 - check all cells between two taboo cells along walls
+    # Starting vertically (column-wise)
+    tb_cell_tracker = tb_cells.copy()
+    current_col = 0
+    prev_col = 0
+    for tb_cell in tb_cell_tracker:
+        prev_col = current_col
+        current_col = tb_cell[0]
+        if current_col == prev_col:
             continue
-        
-        num_surrounding_walls = 0
-        # Check for at least two walls surrounding the current cell (above, below, left or right)
-        # ABOVE
-        if (space[0]-1, space[1]) in wall_locs:
-            num_surrounding_walls += 1
-        # BELOW
-        if (space[0]+1, space[1]) in wall_locs:
-            num_surrounding_walls += 1
-        # LEFT
-        if (space[0], space[1]-1) in wall_locs:
-            num_surrounding_walls += 1
-        # RIGHT
-        if (space[0], space[1]+1) in wall_locs:
-            num_surrounding_walls += 1
-        
-        if num_surrounding_walls >= 2:
-            tb_cells.append(space)
-        
+        tb_cell_same_col = [cell for cell in tb_cells if tb_cell[0] == cell[0]]
+
+        if len(tb_cell_same_col) < 2:
+            continue
+        if len(tb_cell_same_col) == 2:
+            # Check there are no walls between the two cells
+            walls_between = [wall for wall in wall_locs if wall[0] == current_col and wall[1] > tb_cell_same_col[0][1]
+                            and wall[1] < tb_cell_same_col[1][1]]
+            if len(walls_between) == 0:
+                # No walls found between the two cells
+                # Now ensure that none of the in-between cells are a target
+                cells_between = [(current_col, y) for y in range(tb_cell_same_col[0][1]+1, tb_cell_same_col[1][1])]
+                target_found = False
+                for cell in cells_between:
+                    if cell in target_locs:
+                        target_found = True
+                if target_found:
+                    # One fo the cells was a target, so ignore
+                    continue
+                # Now ensure that all cells have at least one wall adjacent to them
+                cells_checked_positive = 0
+                for cell in cells_between:
+                    num_adj_cells = 0
+                    # ABOVE
+                    if (cell[0]-1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # BELOW
+                    if (cell[0]+1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # LEFT
+                    if (cell[0], cell[1]-1) in wall_locs:
+                        num_adj_cells += 1
+                    # RIGHT
+                    if (cell[0], cell[1]+1) in wall_locs:
+                        num_adj_cells += 1
+                    if num_adj_cells >= 1:
+                        cells_checked_positive += 1
+                if cells_checked_positive == len(cells_between):
+                    # Add all cells in cells_between to tb_cells
+                    for cell in cells_between:
+                        tb_cells.append(cell)
+                        tb_cells.sort()
+        elif len(tb_cell_same_col) > 2:
+            # Check through each adjacent pair of cells, ensuring that there are no walls between them
+            for i in range(1, len(tb_cell_same_col)):
+                # Check there are no walls between the two cells
+                walls_between = [wall for wall in wall_locs if wall[0] == current_col and wall[1] > tb_cell_same_col[i-1][1]
+                                and wall[1] < tb_cell_same_col[i][1]]
+                if (len(walls_between)) == 0:
+                    # Check all cells between are adjacent to a wall
+                    # Now ensure that none of the in-between cells are a target
+                    cells_between = [(current_col, y) for y in range(tb_cell_same_col[i-1][1]+1, tb_cell_same_col[i][1])]
+                    target_found = False
+                    for cell in cells_between:
+                        if cell in target_locs:
+                            target_found = True
+                    if target_found:
+                        # One fo the cells was a target, so ignore
+                        continue
+                    # Now ensure that all cells have at least one wall adjacent to them
+                    cells_checked_positive = 0
+                    for cell in cells_between:
+                        num_adj_cells = 0
+                        # LEFT
+                        if (cell[0]-1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # RIGHT
+                        if (cell[0]+1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # ABOVE
+                        if (cell[0], cell[1]-1) in wall_locs:
+                            num_adj_cells += 1
+                        # BELOW
+                        if (cell[0], cell[1]+1) in wall_locs:
+                            num_adj_cells += 1
+                        if num_adj_cells >= 1:
+                            cells_checked_positive += 1
+                    if cells_checked_positive == len(cells_between):
+                        # Add all cells in cells_between to tb_cells
+                        for cell in cells_between:
+                            tb_cells.append(cell)
+                            tb_cells.sort()
+
+    # Now working horizontally (row-wise)
+    current_row = 0
+    prev_row = 0
+    for tb_cell in tb_cell_tracker:
+        prev_row = current_row
+        current_row = tb_cell[1]
+        if current_row == prev_row:
+            continue
+        tb_cell_same_row = [cell for cell in tb_cells if tb_cell[1] == cell[1]]
+
+        if len(tb_cell_same_row) < 2:
+            continue
+        if tb_cell_same_row[0][0] == tb_cell_same_row[1][0] - 1:
+            continue
+        if len(tb_cell_same_row) == 2:
+            # Check there are no walls between the two cells
+            walls_between = [wall for wall in wall_locs if wall[1] == current_row and wall[0] > tb_cell_same_row[0][0]
+                            and wall[0] < tb_cell_same_row[1][0]]
+            if len(walls_between) == 0:
+                # No walls found between the two cells
+                # Now ensure that none of the in-between cells are a target
+                cells_between = [(x, tb_cell_same_row[0][1]) for x in range(tb_cell_same_row[0][0]+1, tb_cell_same_row[1][0])]
+                target_found = False
+                for cell in cells_between:
+                    if cell in target_locs:
+                        target_found = True
+                if target_found:
+                    # One fo the cells was a target, so ignore
+                    continue
+                # Now ensure that all cells have at least one wall adjacent to them
+                cells_checked_positive = 0
+                for cell in cells_between:
+                    num_adj_cells = 0
+                    # LEFT
+                    if (cell[0]-1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # RIGHT
+                    if (cell[0]+1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # ABOVE
+                    if (cell[0], cell[1]-1) in wall_locs:
+                        num_adj_cells += 1
+                    # BELOW
+                    if (cell[0], cell[1]+1) in wall_locs:
+                        num_adj_cells += 1
+                    if num_adj_cells >= 1:
+                        cells_checked_positive += 1
+                if cells_checked_positive == len(cells_between):
+                    # Add all cells in cells_between to tb_cells
+                    for cell in cells_between:
+                        tb_cells.append(cell)
+                        tb_cells.sort()
+        elif len(tb_cell_same_row) > 2:
+            # Check through each adjacent pair of cells, ensuring that there are no walls between them
+            for i in range(1, len(tb_cell_same_row)):
+                # Check there are no walls between the two cells
+                walls_between = [wall for wall in wall_locs if wall[0] == current_row and wall[1] > tb_cell_same_row[i-1][1]
+                                and wall[1] < tb_cell_same_row[i][1]]
+                if (len(walls_between)) == 0:
+                    # Check all cells between are adjacent to a wall
+                    # Now ensure that none of the in-between cells are a target
+                    cells_between = [(current_row, y) for y in range(tb_cell_same_row[i-1][1]+1, tb_cell_same_row[i][1])]
+                    target_found = False
+                    for cell in cells_between:
+                        if cell in target_locs:
+                            target_found = True
+                    if target_found:
+                        # One fo the cells was a target, so ignore
+                        continue
+                    # Now ensure that all cells have at least one wall adjacent to them
+                    cells_checked_positive = 0
+                    for cell in cells_between:
+                        num_adj_cells = 0
+                        # LEFT
+                        if (cell[0]-1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # RIGHT
+                        if (cell[0]+1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # ABOVE
+                        if (cell[0], cell[1]-1) in wall_locs:
+                            num_adj_cells += 1
+                        # BELOW
+                        if (cell[0], cell[1]+1) in wall_locs:
+                            num_adj_cells += 1
+                        if num_adj_cells >= 1:
+                            cells_checked_positive += 1
+                    if cells_checked_positive == len(cells_between):
+                        # Add all cells in cells_between to tb_cells
+                        for cell in cells_between:
+                            tb_cells.append(cell)
+                            tb_cells.sort()
+
+    X,Y = zip(*warehouse.walls) # pythonic version of the above
+    x_size, y_size = 1+max(X), 1+max(Y)
+    
+    vis = [[" "] * x_size for y in range(y_size)]
+    # can't use  vis = [" " * x_size for y ...]
+    # because we want to change the characters later
+    for (x,y) in warehouse.walls:
+        vis[y][x] = "#"
+    for (x,y) in tb_cells:
+        vis[y][x] = "X"
+    return "\n".join(["".join(line) for line in vis])
+    
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -495,10 +703,10 @@ def solve_weighted_sokoban(warehouse):
 
     @return
     
-        If puzzle cannot be solved 
+        If puzzle cannot be solved
             return 'Impossible', None
         
-        If a solution was found, 
+        If a solution was found,
             return S, C 
             where S is a list of actions that solves
             the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
@@ -506,9 +714,22 @@ def solve_weighted_sokoban(warehouse):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
+    
+    Method:
+    - If boxes in targets return S = [], C = 0 
+    - Label taboo cells
+    - solve sokoban with problem class
+        - initialise Problem class (warehouse)
+        - call astar_graph_search
+    - check_elem_seq
+    - return S and C
+    
+    
     '''
     
-    print('- '*40)
+
+
+    raise NotImplementedError()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
