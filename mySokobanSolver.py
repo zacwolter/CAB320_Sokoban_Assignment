@@ -357,20 +357,6 @@ def taboo_cells(warehouse):
     return taboo_cells_string
 
 
-
-        
-
-
-                
-                
-
-                    
-
-
-            
-
-    
-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class State:
@@ -731,10 +717,10 @@ def solve_weighted_sokoban(warehouse):
 
     @return
     
-        If puzzle cannot be solved 
+        If puzzle cannot be solved
             return 'Impossible', None
         
-        If a solution was found, 
+        If a solution was found,
             return S, C 
             where S is a list of actions that solves
             the given puzzle coded with 'Left', 'Right', 'Up', 'Down'
@@ -742,8 +728,21 @@ def solve_weighted_sokoban(warehouse):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
+    
+    Method:
+    - If boxes in targets return S = [], C = 0 
+    - Label taboo cells
+    - solve sokoban with problem class
+        - initialise Problem class (warehouse)
+        - call astar_graph_search
+    - check_elem_seq
+    - return S and C
+    
+    
     '''
     
+
+
     raise NotImplementedError()
 
 
