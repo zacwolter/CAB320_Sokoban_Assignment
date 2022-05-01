@@ -29,8 +29,8 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 # You have to make sure that your code works with 
 # the files provided (search.py and sokoban.py) as your code will be tested 
 # with these files
+from logging import exception
 import search 
-import sokoban
 import operator
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,290 +72,277 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-
-    ###
-    # First, understanding what cells are inside the factory:
-    #   Check 1: If a cell is empty AND there has been at least 1 cell that denoted a wall before it,
-    #            then it is inside the warehouse
-    #   Issue 1: All cells outside the warehouse on the right side of the final wall piece will be 
-    #            counted incorrectly as inside
-    #       Example:
-    #
-    #           "      # # # #      "    ==     "x x x # # # # o o o"
-    #
-    #         Where "x" denotes outside and "o" denotes inside
-    #
-    #       BUT:
-    #           When looking at the warehouse .txt files, it appears that no spaces are added after
-    #           the final wall in a line like so:
-    #
-    #           "      # # # #"     ==   "x x x # # # #"
-    #
-    #           Which is correct in identifying what is outside the warehouse
-    #   HENCE Issue 1 is resolved based on the assumption that this occurrence is consistent across all
-    #         warehouse .txt files.
-    #   
-    # Next, understanding how to denote horizontally and vertically adjacent taboo cells
-    #   - We know that all corners that are not targets are taboo cells, and any cells between two corners
-    #     are also taboo cells if none of them are a target
-    #   - To understand if a taboo cell is a corner, all four sides (top, bottom, left and right) need to be
-    #     checked for existing walls... if a cell has at least two walls surrounding it, then it is a corner
-    #       - It is NOT logical to assume that a cell that is adjacent to one wall is part of a set of cells
-    #         between two corners because some walls are standalone or within the confines of the warehouse
-    #   - To find other cells that are taboo (cells that are part of a set of cells between two corners where
-    #     no target cells lie), simply find the enclosing walls (either vertically or horizontally) and check
-    #     if any of the cells between the two walls are targets. If not, then all cells that are enclosed are
-    #     classified as taboo
-    ###
+    
     #The rules identified from research are:
     # Rule 1: if a cell is a corner and not a target, then it is a taboo cell.
-    #  Rule 2: all cells between two corners along a wall are taboo if none of 
-    #          these cells is a target.
-    #Therefore now trying to meet these rules 
-    corner_Taboo=[] #corner taboo cells 
-    in_between_cells=[]#Cells that are made taboo cells between corner taboo cells 
-    taboo_cells_string=[]
-    #Now as we are trying to identify what is a wall, boxes, goal and character which are 
-    #identified by #,$,'.' and @ respectively
-    #Therefore the best way to identify these is converting the input warehouse object into a string
-    All_cells=str(warehouse).split('\n')
-    no_of_cells=0
-    for i in All_cells:
-        All_cells[no_of_cells]=list(i)
-        no_of_cells=no_of_cells+1
-    ab=[]
-    #Now generate the pieces of code for rule 1 identified/explained earlier
-    ab=All_cells[:]#take every element from every element in the array
-    targets=[]
-    for row_index,row_value in enumerate(All_cells):#get the values residing in row
-        cell_Inner=0#set the starting default case for all cells overlooked to be outside
-        #the working area #column here is essentially column index
-        for column,value in enumerate(row_value):
-            if value=='@' or value=='.' or value=='$' or value=='*':
-                All_cells[row_index][column]=" " #set that the worker, box or target will be working area
-                #set that the function knows now that we know the counter is in working area
-                cell_Inner=1
-            if value=='#':
-                cell_Inner=1 #set that the function knows now that we know the counter is in working area
-                for index in range(column):
-                    if All_cells[row_index][index]=='#':
-                        cell_Inner=0
-                All_cells[row_index][column]=='#'
-            elif value=='.':
-                targets.append((row_index,column)) #store the location of the target for future use
-            else:
-                #check if space is within the working area and at the corners
-                #first we can look at it as if we have reached the natural limits of the array containing
-                #the layout of the working area, therefore
-                if row_index==0 or row_index==len(All_cells)-1 or column==0 or column==len(All_cells[row_index])-1 or cell_Inner==0:
-                    All_cells[row_index][column]=value
-                else:
-                    left_top_taboo= ab[row_index-1][column]=='#' and ab[row_index][column-1]=='#' #will generate a 1 or zero
-                    right_top_taboo= ab[row_index-1][column]=='#' and ab[row_index][column+1]=='#'#checks top right
-                    left_bot_taboo= ab[row_index+1][column]=='#' and ab[row_index][column-1]=='#'
-                    right_bot_taboo= ab[row_index+1][column]=='#' and ab[row_index][column+1]=='#'
-                    if left_top_taboo==1 or right_top_taboo==1 or left_bot_taboo==1 or right_bot_taboo==1:
-                        All_cells[row_index][column]="X"#set as taboo cell
-                        #store this taboo cell into a variable  
-                        corner_Taboo.append((row_index,column))
-                    else:
-                        All_cells[row_index][column]=' '#set as empty space
+    # Rule 2: all cells between two corners along a wall are taboo if none of 
+    #         these cells is a target.
 
-    #now set up the code to calculate the taboo cells for rule 2
-    #Section 1/4 for rule 2
-    rule2Taboo=[]
-    Taboo=False #set a boolean variable to determine if the taboo cells connected between corners
-    #are actually taboo cells top left corners
-    for z in corner_Taboo:
-        if All_cells[z[0]][z[1]-1]=='#' and All_cells[z[0]-1][z[1]]=='#':
-            vertical=z[0]+1 #go downward 
-            horizontal=z[1]+1#go sideward, but start 1 tile to the right of corner
-            #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != '#':
-                #keep going down vertically until a wall is reached storing these cells as taboo cells
-                rule2Taboo.append((vertical,z[1]))
-                vertical+=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]-1]!='#':
-                        Taboo=False
-                    if X_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-                    
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            #get all cells that are to the right of the corner 
-            rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
-                rule2Taboo.append((z[0],horizontal))
-                horizontal+=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!='#':
-                        Taboo=False
-                    if Y_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            rule2Taboo=[]
+    # Gather all necessary information from the warehouse (walls and target locations)
+    wall_locs = warehouse.walls
+    target_locs = warehouse.targets
+    num_cols = warehouse.ncols
 
+    # Rule 1: Cells that are not targets and are surrounded by walls are taboo
+    # Assumptions:
+    #   1. Warehouse interior spaces do not start until row 1 and column 1, as row 0 is always the
+    #      top wall row and column 0 if the leftmost wall row
+    #   2. All empty spaces between the first wall instance and last wall instance are
+    #      inside the warehouse, regardless of if there are extra walls in-between
+    
+    # Start by identifying all interior empty spaces (incl. targets just to be safe)
+    tb_cells = []
+    empty_spaces_inside = []
+    for i in range(num_cols - 1):
+        if i == 0:
+            continue
+        current_row = i
+        walls_in_row = [(x,y) for (x,y) in wall_locs if x == i]
+        walls_in_row.sort()
+        first_wall_in_row = walls_in_row[0]
+        last_wall_in_row = walls_in_row[-1]
+        empty_spaces_inside_row = [(current_row,y) for y in range(first_wall_in_row[1], last_wall_in_row[1]+1) 
+                                if (current_row,y) not in walls_in_row]
+        empty_spaces_inside.append(empty_spaces_inside_row)
 
-
-        #now focus on top right corner taboo cells SECTION 2/4 
-        #Basically the same as before 
-        if All_cells[z[0]][z[1]+1]=='#' and All_cells[z[0]-1][z[1]]=='#':
-            vertical=z[0]+1 #go downward 
-            horizontal=z[1]-1#go sideward, but start 1 tile to the left of corner
-            #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != '#':
-                #keep going down vertically until a wall is reached storing these cells as taboo cells
-                rule2Taboo.append((vertical,z[1]))
-                vertical+=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]+1]!='#':
-                        Taboo=False
-                    if X_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-                    
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            #get all cells that are to the right of the corner 
-            rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
-                rule2Taboo.append((z[0],horizontal))
-                horizontal-=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]-1][X_rule2[1]]!='#':
-                        Taboo=False
-                    if Y_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            rule2Taboo=[]
-
-
-
-            #now focus on bottom left corner taboo cells SECTION 3/4 
-            #Basically the same as before 
-        if All_cells[z[0]][z[1]-1]=='#' and All_cells[z[0]+1][z[1]]=='#':
-            vertical=z[0]-1 #go upward 
-            horizontal=z[1]+1#go sideward, but start 1 tile to the right of corner
-            #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != '#':
-                #keep going down vertically until a wall is reached storing these cells as taboo cells
-                rule2Taboo.append((vertical,z[1]))
-                vertical-=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]-1]!='#':
-                        Taboo=False
-                    if X_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-                    
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            #get all cells that are to the right of the corner 
-            rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
-                rule2Taboo.append((z[0],horizontal))
-                horizontal+=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!='#':
-                        Taboo=False
-                    if Y_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            rule2Taboo=[]
+    # Now check Rule 1 - check if each free space is a corner and not a target
+    for row in empty_spaces_inside:
+        for space in row:
+            if space in target_locs:
+                # Ignore targets, they cannot be taboo cells
+                continue
             
+            num_surrounding_walls = 0
+            surrounding_sides = []
+            # Check for at least two walls surrounding the current cell (above, below, left or right)
+            # If surrounding cells are opposite sides and only two cells surrounding, then NOT taboo
+            # ABOVE
+            if (space[0]-1, space[1]) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("ABOVE")
+            # BELOW
+            if (space[0]+1, space[1]) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("BELOW")
+            # LEFT
+            if (space[0], space[1]-1) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("LEFT")
+            # RIGHT
+            if (space[0], space[1]+1) in wall_locs:
+                num_surrounding_walls += 1
+                surrounding_sides.append("RIGHT")
+            
+            if num_surrounding_walls == 2:
+                if "ABOVE" in surrounding_sides and "BELOW" in surrounding_sides:
+                    # IGNORE as box can pass through
+                    pass
+                elif "LEFT" in surrounding_sides and "RIGHT" in surrounding_sides:
+                    # IGNORE as box can pass through
+                    pass
+                else:
+                    tb_cells.append(space)
+            elif num_surrounding_walls > 2:
+                tb_cells.append(space)
 
+    # Now check Rule 2 - check all cells between two taboo cells along walls
+    # Starting vertically (column-wise)
+    tb_cell_tracker = tb_cells.copy()
+    current_col = 0
+    prev_col = 0
+    for tb_cell in tb_cell_tracker:
+        prev_col = current_col
+        current_col = tb_cell[0]
+        if current_col == prev_col:
+            continue
+        tb_cell_same_col = [cell for cell in tb_cells if tb_cell[0] == cell[0]]
 
-            #now focus on bottom right corner taboo cells SECTION 4/4 
-            #Basically the same as before 
-        if All_cells[z[0]][z[1]+1]=='#' and All_cells[z[0]+1][z[1]]=='#':
-            vertical=z[0]-1 #go upward 
-            horizontal=z[1]-1#go sideward, but start 1 tile to the left of corner
-            #now continue downward looking at each 
-            while All_cells[vertical][z[1]] != '#':
-                #keep going down vertically until a wall is reached storing these cells as taboo cells
-                rule2Taboo.append((vertical,z[1]))
-                vertical-=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for X_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[X_rule2[0]][X_rule2[1]+1]!='#':
-                        Taboo=False
-                    if X_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-                    
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            #get all cells that are to the right of the corner 
-            rule2Taboo=[] #reset the variable to contain nothing
-            while All_cells[z[0]][horizontal] != '#': #take the current iteration row index/value from z and continue rightward with horizontal
-                rule2Taboo.append((z[0],horizontal))
-                horizontal-=1
-            #check if there are other cells within this 
-            if rule2Taboo[-1] in corner_Taboo:
-                Taboo=True
-                for Y_rule2 in rule2Taboo: #look to the left of the potential taboo cells to see if wall is present
-                    if All_cells[Y_rule2[0]+1][X_rule2[1]]!='#':
-                        Taboo=False
-                    if Y_rule2 in targets:
-                        Taboo=False #so if any of the tiles in the sides of the workspace are targets 
-                        #then the whole side will not be valid unless its a corner
-            if Taboo:
-                in_between_cells.extend(rule2Taboo)
-                #set back taboo state to false as we assume now that we move on to another corner or side
-                Taboo=False
-            rule2Taboo=[]
-    for deez in in_between_cells:
-        All_cells[deez[0]][deez[1]]='X'
-    #All_cells=All_cells[1:]
-    for rows in All_cells:
-        print(rows)
-        #taboo_cells_string += "\n"
-        #taboo_cells_string += ''.join(rows)
+        if len(tb_cell_same_col) < 2:
+            continue
+        if len(tb_cell_same_col) == 2:
+            # Check there are no walls between the two cells
+            walls_between = [wall for wall in wall_locs if wall[0] == current_col and wall[1] > tb_cell_same_col[0][1]
+                            and wall[1] < tb_cell_same_col[1][1]]
+            if len(walls_between) == 0:
+                # No walls found between the two cells
+                # Now ensure that none of the in-between cells are a target
+                cells_between = [(current_col, y) for y in range(tb_cell_same_col[0][1]+1, tb_cell_same_col[1][1])]
+                target_found = False
+                for cell in cells_between:
+                    if cell in target_locs:
+                        target_found = True
+                if target_found:
+                    # One fo the cells was a target, so ignore
+                    continue
+                # Now ensure that all cells have at least one wall adjacent to them
+                cells_checked_positive = 0
+                for cell in cells_between:
+                    num_adj_cells = 0
+                    # ABOVE
+                    if (cell[0]-1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # BELOW
+                    if (cell[0]+1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # LEFT
+                    if (cell[0], cell[1]-1) in wall_locs:
+                        num_adj_cells += 1
+                    # RIGHT
+                    if (cell[0], cell[1]+1) in wall_locs:
+                        num_adj_cells += 1
+                    if num_adj_cells >= 1:
+                        cells_checked_positive += 1
+                if cells_checked_positive == len(cells_between):
+                    # Add all cells in cells_between to tb_cells
+                    for cell in cells_between:
+                        tb_cells.append(cell)
+                        tb_cells.sort()
+        elif len(tb_cell_same_col) > 2:
+            # Check through each adjacent pair of cells, ensuring that there are no walls between them
+            for i in range(1, len(tb_cell_same_col)):
+                # Check there are no walls between the two cells
+                walls_between = [wall for wall in wall_locs if wall[0] == current_col and wall[1] > tb_cell_same_col[i-1][1]
+                                and wall[1] < tb_cell_same_col[i][1]]
+                if (len(walls_between)) == 0:
+                    # Check all cells between are adjacent to a wall
+                    # Now ensure that none of the in-between cells are a target
+                    cells_between = [(current_col, y) for y in range(tb_cell_same_col[i-1][1]+1, tb_cell_same_col[i][1])]
+                    target_found = False
+                    for cell in cells_between:
+                        if cell in target_locs:
+                            target_found = True
+                    if target_found:
+                        # One fo the cells was a target, so ignore
+                        continue
+                    # Now ensure that all cells have at least one wall adjacent to them
+                    cells_checked_positive = 0
+                    for cell in cells_between:
+                        num_adj_cells = 0
+                        # LEFT
+                        if (cell[0]-1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # RIGHT
+                        if (cell[0]+1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # ABOVE
+                        if (cell[0], cell[1]-1) in wall_locs:
+                            num_adj_cells += 1
+                        # BELOW
+                        if (cell[0], cell[1]+1) in wall_locs:
+                            num_adj_cells += 1
+                        if num_adj_cells >= 1:
+                            cells_checked_positive += 1
+                    if cells_checked_positive == len(cells_between):
+                        # Add all cells in cells_between to tb_cells
+                        for cell in cells_between:
+                            tb_cells.append(cell)
+                            tb_cells.sort()
 
-    return taboo_cells_string
+    # Now working horizontally (row-wise)
+    current_row = 0
+    prev_row = 0
+    for tb_cell in tb_cell_tracker:
+        prev_row = current_row
+        current_row = tb_cell[1]
+        if current_row == prev_row:
+            continue
+        tb_cell_same_row = [cell for cell in tb_cells if tb_cell[1] == cell[1]]
 
+        if len(tb_cell_same_row) < 2:
+            continue
+        if tb_cell_same_row[0][0] == tb_cell_same_row[1][0] - 1:
+            continue
+        if len(tb_cell_same_row) == 2:
+            # Check there are no walls between the two cells
+            walls_between = [wall for wall in wall_locs if wall[1] == current_row and wall[0] > tb_cell_same_row[0][0]
+                            and wall[0] < tb_cell_same_row[1][0]]
+            if len(walls_between) == 0:
+                # No walls found between the two cells
+                # Now ensure that none of the in-between cells are a target
+                cells_between = [(x, tb_cell_same_row[0][1]) for x in range(tb_cell_same_row[0][0]+1, tb_cell_same_row[1][0])]
+                target_found = False
+                for cell in cells_between:
+                    if cell in target_locs:
+                        target_found = True
+                if target_found:
+                    # One fo the cells was a target, so ignore
+                    continue
+                # Now ensure that all cells have at least one wall adjacent to them
+                cells_checked_positive = 0
+                for cell in cells_between:
+                    num_adj_cells = 0
+                    # LEFT
+                    if (cell[0]-1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # RIGHT
+                    if (cell[0]+1, cell[1]) in wall_locs:
+                        num_adj_cells += 1
+                    # ABOVE
+                    if (cell[0], cell[1]-1) in wall_locs:
+                        num_adj_cells += 1
+                    # BELOW
+                    if (cell[0], cell[1]+1) in wall_locs:
+                        num_adj_cells += 1
+                    if num_adj_cells >= 1:
+                        cells_checked_positive += 1
+                if cells_checked_positive == len(cells_between):
+                    # Add all cells in cells_between to tb_cells
+                    for cell in cells_between:
+                        tb_cells.append(cell)
+                        tb_cells.sort()
+        elif len(tb_cell_same_row) > 2:
+            # Check through each adjacent pair of cells, ensuring that there are no walls between them
+            for i in range(1, len(tb_cell_same_row)):
+                # Check there are no walls between the two cells
+                walls_between = [wall for wall in wall_locs if wall[0] == current_row and wall[1] > tb_cell_same_row[i-1][1]
+                                and wall[1] < tb_cell_same_row[i][1]]
+                if (len(walls_between)) == 0:
+                    # Check all cells between are adjacent to a wall
+                    # Now ensure that none of the in-between cells are a target
+                    cells_between = [(current_row, y) for y in range(tb_cell_same_row[i-1][1]+1, tb_cell_same_row[i][1])]
+                    target_found = False
+                    for cell in cells_between:
+                        if cell in target_locs:
+                            target_found = True
+                    if target_found:
+                        # One fo the cells was a target, so ignore
+                        continue
+                    # Now ensure that all cells have at least one wall adjacent to them
+                    cells_checked_positive = 0
+                    for cell in cells_between:
+                        num_adj_cells = 0
+                        # LEFT
+                        if (cell[0]-1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # RIGHT
+                        if (cell[0]+1, cell[1]) in wall_locs:
+                            num_adj_cells += 1
+                        # ABOVE
+                        if (cell[0], cell[1]-1) in wall_locs:
+                            num_adj_cells += 1
+                        # BELOW
+                        if (cell[0], cell[1]+1) in wall_locs:
+                            num_adj_cells += 1
+                        if num_adj_cells >= 1:
+                            cells_checked_positive += 1
+                    if cells_checked_positive == len(cells_between):
+                        # Add all cells in cells_between to tb_cells
+                        for cell in cells_between:
+                            tb_cells.append(cell)
+                            tb_cells.sort()
+
+    X,Y = zip(*warehouse.walls) # pythonic version of the above
+    x_size, y_size = 1+max(X), 1+max(Y)
+    
+    vis = [[" "] * x_size for y in range(y_size)]
+    # can't use  vis = [" " * x_size for y ...]
+    # because we want to change the characters later
+    for (x,y) in warehouse.walls:
+        vis[y][x] = "#"
+    for (x,y) in tb_cells:
+        vis[y][x] = "X"
+    return "\n".join(["".join(line) for line in vis])
+    
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -374,10 +361,7 @@ class SokobanPuzzle(search.Problem):
     the provided module 'search.py'. 
     
     '''
-    
-    #
-    #         "INSERT YOUR CODE HERE"
-    #
+
     #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
     #
     #     Note that you will need to add several functions to 
@@ -676,9 +660,11 @@ def check_elem_action_seq(warehouse, action_seq):
             resultant_worker = (warehouse.worker[0] + 1, warehouse.worker[1]) 
         elif action == 'Up': # Up move
             resultant_worker = (warehouse.worker[0], warehouse.worker[1] - 1)
-        else: # Down move
+        elif action == 'Down': # Down move
             resultant_worker = (warehouse.worker[0], warehouse.worker[1] + 1)
-        
+        else:
+            exception("[check_elem_action_seq] Error parsing action")
+
         # Check if the action results in the worker hitting a wall (no box considered)
         if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
             return "Impossible"
@@ -711,15 +697,15 @@ def solve_weighted_sokoban(warehouse):
     This function analyses the given warehouse.
     It returns the two items. The first item is an action sequence solution. 
     The second item is the total cost of this action sequence.
-    
+
     @param 
      warehouse: a valid Warehouse object
 
     @return
-    
+
         If puzzle cannot be solved
             return 'Impossible', None
-        
+
         If a solution was found,
             return S, C 
             where S is a list of actions that solves
@@ -728,19 +714,16 @@ def solve_weighted_sokoban(warehouse):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
-    
+
     Method:
     - If boxes in targets return S = [], C = 0 
     - solve sokoban with problem class
         - initialise Problem class (warehouse)
         - call astar_graph_search
-    - check_elem_seq
     - return S and C
-    
-    
-    '''
 
-    
+
+    '''
 
     if warehouse.__str__().count(".") == 0: # boxes are already on targets
         S = []
