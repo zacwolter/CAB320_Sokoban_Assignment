@@ -530,7 +530,7 @@ class SokobanPuzzle(search.Problem):
         return self.warehouse.targets.sort() == state.box_locs.sort()
 
 
-    def path_cost(self, c, state1, action, state2):
+    def path_cost(self, c, state1, action, state2): 
         """
         Return the cost of using action to travel from state1 to state2, taking into consideration
         the weight of the box and knowing that the cost to move one space is 1.
@@ -731,7 +731,7 @@ def solve_weighted_sokoban(warehouse):
         return S, C
     else: # puzzle needs to be solved
         sokoban_puzzle = SokobanPuzzle(warehouse)
-        S = search.astar_graph_search(sokoban_puzzle, SokobanPuzzle.value()) 
+        S = search.astar_graph_search(sokoban_puzzle, sokoban_puzzle.value())
         C = sokoban_puzzle.path_cost()
         return S, C
 
