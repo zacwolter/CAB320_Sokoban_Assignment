@@ -70,7 +70,7 @@ def taboo_cells(warehouse):
        A string representing the warehouse with only the wall cells marked with 
        a '#' and the taboo cells marked with a 'X'.  
        The returned string should NOT have marks for the worker, the targets,
-       and the boxes.  
+       and the boxes.
     '''
 
     ###
@@ -731,7 +731,6 @@ def solve_weighted_sokoban(warehouse):
     
     Method:
     - If boxes in targets return S = [], C = 0 
-    - Label taboo cells
     - solve sokoban with problem class
         - initialise Problem class (warehouse)
         - call astar_graph_search
@@ -740,10 +739,20 @@ def solve_weighted_sokoban(warehouse):
     
     
     '''
+
     
 
+    if warehouse.__str__().count(".") == 0: # boxes are already on targets
+        S = []
+        C = 0
+        return S, C
+    else: # puzzle needs to be solved
+        sokoban_puzzle = SokobanPuzzle(warehouse)
+        S = search.astar_graph_search(sokoban_puzzle, SokobanPuzzle.value()) 
+        C = sokoban_puzzle.path_cost()
+        return S, C
 
-    raise NotImplementedError()
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
