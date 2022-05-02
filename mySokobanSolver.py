@@ -347,9 +347,9 @@ def taboo_cells(warehouse):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class State:
-    def __init__(self, worker_loc=None, box_locs=None):
-        self.worker_loc = worker_loc
-        self.box_locs = box_locs
+    def __init__(self, warehouse):
+        self.worker = warehouse.worker
+        self.boxes = warehouse.boxes
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -372,8 +372,9 @@ class SokobanPuzzle(search.Problem):
 
     
     def __init__(self, warehouse):
-        self.warehouse = warehouse
-        self.state = State(worker_loc = warehouse.worker, box_locs = warehouse.boxes)
+        self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
+        self.problem = warehouse
+        # self.taboo = taboo_cells(warehouse)
 
     def actions(self, state):
         """
@@ -385,84 +386,84 @@ class SokobanPuzzle(search.Problem):
         #     when combined if they're legal or not
         
         # First gain an understanding of the current state
-        worker_loc = state.worker
-        box_locs = state.boxes
-        wall_locs = self.warehouse.walls
+        worker_loc = state[1]
+        box_locs = state[0]
+        wall_locs = self.problem.walls
 
         # Next check where the worker can move and append it to the list of possible actions
         legal_moves = []    # list of legal actions
 
         # UP: Check if there is a wall or a box in the space above the worker
-        boxes_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
-        walls_above = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
+        boxes_above = [box for box in box_locs if box[0] == worker_loc[0] and box[1] == worker_loc[1] - 1]
+        walls_above = [wall for wall in wall_locs if wall[0] == worker_loc[0] and wall[1] == worker_loc[1] - 1]
         if len(boxes_above) > 0:
             # There is a box above the worker, need to check if there are any boxes/walls above the box
-            blocking_box_above = [(x,y) for (x,y) in box_locs if x == boxes_above[0][0] - 1 if boxes_above[0][1] == y]
-            blocking_wall_above = [(x,y) for (x,y) in wall_locs if x == boxes_above[0][0] - 1 if boxes_above[0][1] == y]
+            blocking_box_above = [box for box in box_locs if box[0] == boxes_above[0][0] and box[1] == boxes_above[0][1] - 1]
+            blocking_wall_above = [wall for wall in wall_locs if wall[0] == boxes_above[0][0] if wall[1] == boxes_above[0][1] - 1]
             # If there is no blocking box or wall in the space above, append "UP" as a legal move 
             # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
             if len(blocking_box_above) == 0 and len(blocking_wall_above) == 0:
-                legal_moves.append("UP")
+                legal_moves.append("Up")
         elif len(walls_above) > 0:
-            # There is a wall above the worker, therefore we cannot move up
+            # There is a wall above the worker, therefore we cannot move Up
             pass
         else:
             # There is no wall or box above the player (WILL NEED TO CHECK FOR TABOO SPACES)
-            legal_moves.append("UP")
+            legal_moves.append("Up")
 
         # DOWN: Check if there is a wall or a box in the space below the worker
-        boxes_below = [(x,y) for (x,y) in box_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
-        walls_below = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
+        boxes_below = [box for box in box_locs if box[0] == worker_loc[0] and box[1] == worker_loc[1] + 1]
+        walls_below = [wall for wall in wall_locs if wall[0] == worker_loc[0] and wall[1] == worker_loc[1] + 1]
         if len(boxes_below) > 0:
             # There is a box below the worker, need to check if there are any boxes/walls below the box
-            blocking_box_below = [(x,y) for (x,y) in box_locs if x == boxes_below[0][0] + 1 if boxes_below[0][1] == y]
-            blocking_wall_below = [(x,y) for (x,y) in wall_locs if x == boxes_below[0][0] + 1 if boxes_below[0][1] == y]
+            blocking_box_below = [box for box in box_locs if box[0] == boxes_below[0][0] and box[1] == boxes_below[0][1] + 1]
+            blocking_wall_below = [wall for wall in wall_locs if wall[0] == boxes_below[0][0] if wall[1] == boxes_below[0][1] + 1]
             # If there is no blocking box or wall in the space below, append "DOWN" as a legal move 
             # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
             if len(blocking_box_below) == 0 and len(blocking_wall_below) == 0:
-                legal_moves.append("DOWN")
+                legal_moves.append("Down")
         elif len(walls_below) > 0:
-            # There is a wall below the worker, therefore we cannot move up
+            # There is a wall below the worker, therefore we cannot move down
             pass
         else:
             # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
-            legal_moves.append("DOWN")
+            legal_moves.append("Down")
 
         # LEFT: Check if there is a wall or a box in the space to the left of the worker
-        boxes_left = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
-        walls_left = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
+        boxes_left = [box for box in box_locs if box[0] == worker_loc[0] - 1 and box[1] == worker_loc[1]]
+        walls_left = [wall for wall in wall_locs if wall[0] == worker_loc[0] - 1 and wall[1] == worker_loc[1]]
         if len(boxes_left) > 0:
             # There is a box to the left of the worker, need to check if there are any boxes/walls to the left of the box
-            blocking_box_left = [(x,y) for (x,y) in box_locs if x == boxes_left[0][0] if boxes_left[0][1] - 1 == y]
-            blocking_wall_left = [(x,y) for (x,y) in wall_locs if x == boxes_left[0][0] if boxes_left[0][1] - 1 == y]
+            blocking_box_left = [box for box in box_locs if box[0] == boxes_left[0][0] - 1 and box[1] == boxes_left[0][1]]
+            blocking_wall_left = [wall for wall in wall_locs if wall[0] == boxes_left[0][0] - 1 if wall[1] == boxes_left[0][1]]
             # If there is no blocking box or wall in the space to the left, append "LEFT" as a legal move 
             # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
             if len(blocking_box_left) == 0 and len(blocking_wall_left) == 0:
-                legal_moves.append("LEFT")
+                legal_moves.append("Left")
         elif len(walls_left) > 0:
             # There is a wall below the worker, therefore we cannot move up
             pass
         else:
             # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
-            legal_moves.append("LEFT")
+            legal_moves.append("Left")
 
         # RIGHT: Check if there is a wall or a box in the space to the right of the worker
-        boxes_right = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
-        walls_right = [(x,y) for (x,y) in wall_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+        boxes_right = [box for box in box_locs if box[0] == worker_loc[0] + 1 and box[1] == worker_loc[1]]
+        walls_right = [wall for wall in wall_locs if wall[0] == worker_loc[0] + 1 and wall[1] == worker_loc[1]]
         if len(boxes_right) > 0:
             # There is a box to the right of the worker, need to check if there are any boxes/walls to the right of the box
-            blocking_box_right = [(x,y) for (x,y) in box_locs if x == boxes_right[0][0] if boxes_right[0][1] + 1 == y]
-            blocking_wall_right = [(x,y) for (x,y) in wall_locs if x == boxes_right[0][0] if boxes_right[0][1] + 1 == y]
+            blocking_box_right = [(x,y) for (x,y) in box_locs if x == boxes_right[0][0] + 1 if boxes_right[0][1] == y]
+            blocking_wall_right = [(x,y) for (x,y) in wall_locs if x == boxes_right[0][0] + 1 if boxes_right[0][1] == y]
             # If there is no blocking box or wall in the space to the right, append "RIGHT" as a legal move 
             # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
             if len(blocking_box_right) == 0 and len(blocking_wall_right) == 0:
-                legal_moves.append("RIGHT")
+                legal_moves.append("Right")
         elif len(walls_right) > 0:
             # There is a wall below the worker, therefore we cannot move up
             pass
         else:
             # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
-            legal_moves.append("RIGHT")
+            legal_moves.append("Right")
         
         return legal_moves
         
@@ -475,50 +476,57 @@ class SokobanPuzzle(search.Problem):
         Simply need to check if we're moving just the worker or a box also (keep in mind the actions should
         theoretically be legal based on the above function that checks it)
         """
-        worker_loc = state.worker_loc
-        box_locs = state.box_locs
+        worker_loc = state[1]
+        box_locs = state[0]
         
         # Use action to determine which direction the worker is moving and check if any boxes are in the path
-        if action == "UP":
-            box_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
-            if len(box_above) > 0:
-                # Since there is a box above the worker that needs to be moved, change the location of the box
+        if action == "Left":
+            box_left = [(x,y) for (x,y) in box_locs if x == worker_loc[0] - 1 if worker_loc[1] == y]
+            if len(box_left) > 0:
+                # Since there is a box left the worker that needs to be moved, change the location of the box
                 # by decreasing the row number (push it up one space)
-                box_index = box_locs.index(box_above[0])
-                box_locs[box_index] = (box_above[0][0] - 1, box_above[0][1])
+                box_index = box_locs.index(box_left[0])
+                box_locs_list = list(box_locs)
+                box_locs_list[box_index] = (box_left[0][0] - 1, box_left[0][1])
+                box_locs = tuple(box_locs_list)
             # Regardless of if there's a box, still move the worker's location up one space
             worker_loc = (worker_loc[0] - 1, worker_loc[1])
-        elif action == "DOWN":
-            box_below = [(x,y) for (x,y) in box_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
-            if len(box_below) > 0:
-                # Since there is a box below the worker that needs to be moved, change the location of the box
-                # by decreasing the row number (push it down one space)
-                box_index = box_locs.index(box_below[0])
-                box_locs[box_index] = (box_below[0][0] + 1, box_below[0][1])
-            # Regardless of if there's a box, still move the worker's location down one space
-            worker_loc = (worker_loc[0] + 1, worker_loc[1])
-        elif action == "LEFT":
-            box_left = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
-            if len(box_left) > 0:
-                # Since there is a box to the left of the worker that needs to be moved, change the location of the box
-                # by decreasing the row number (push it down one space)
-                box_index = box_locs.index(box_left[0])
-                box_locs[box_index] = (box_left[0][0], box_left[0][1] - 1)
-            # Regardless of if there's a box, still move the worker's location down one space
-            worker_loc = (worker_loc[0], worker_loc[1] - 1)
-        elif action == "RIGHT":
-            box_right = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+        elif action == "Right":
+            box_right = [(x,y) for (x,y) in box_locs if x == worker_loc[0] + 1 if worker_loc[1] == y]
             if len(box_right) > 0:
-                # Since there is a box to the right of the worker that needs to be moved, change the location of the box
+                # Since there is a box right the worker that needs to be moved, change the location of the box
                 # by decreasing the row number (push it down one space)
                 box_index = box_locs.index(box_right[0])
-                box_locs[box_index] = (box_right[0][0], box_right[0][1] + 1)
+                box_locs_list = list(box_locs)
+                box_locs_list[box_index] = (box_right[0][0] + 1, box_right[0][1])
+                box_locs = tuple(box_locs_list)
+            # Regardless of if there's a box, still move the worker's location down one space
+            worker_loc = (worker_loc[0] + 1, worker_loc[1])
+        elif action == "Up":
+            box_above = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] - 1 == y]
+            if len(box_above) > 0:
+                # Since there is a box to the above of the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it down one space)
+                box_index = box_locs.index(box_above[0])
+                box_locs_list = list(box_locs)
+                box_locs_list[box_index] = (box_above[0][0], box_above[0][1] - 1)
+                box_locs = tuple(box_locs_list)
+            # Regardless of if there's a box, still move the worker's location down one space
+            worker_loc = (worker_loc[0], worker_loc[1] - 1)
+        elif action == "Down":
+            box_below = [(x,y) for (x,y) in box_locs if x == worker_loc[0] if worker_loc[1] + 1 == y]
+            if len(box_below) > 0:
+                # Since there is a box to the below of the worker that needs to be moved, change the location of the box
+                # by decreasing the row number (push it down one space)
+                box_index = box_locs.index(box_below[0])
+                box_locs_list = list(box_locs)
+                box_locs_list[box_index] = (box_below[0][0], box_below[0][1] + 1)
+                box_locs = tuple(box_locs_list)
             # Regardless of if there's a box, still move the worker's location down one space
             worker_loc = (worker_loc[0], worker_loc[1] + 1)
         
-        state.worker_loc = worker_loc
-        state.box_locs = box_locs
-        return state
+        new_state = tuple(box_locs), tuple(worker_loc)
+        return new_state
     
     def goal_test(self, state):
         """
@@ -527,7 +535,11 @@ class SokobanPuzzle(search.Problem):
 
         The legal move checking system will ensure that the worker is in a legal state
         """
-        return self.warehouse.targets.sort() == state.box_locs.sort()
+        boxes = state[0]
+        #boxes = ((2,3), (11,3))
+        if (set(boxes).issubset(set(self.problem.targets))):
+            return True
+        return False
 
 
     def path_cost(self, c, state1, action, state2): 
@@ -536,44 +548,38 @@ class SokobanPuzzle(search.Problem):
         the weight of the box and knowing that the cost to move one space is 1.
         """
         # Determine what has moved between the two states (could be just worker, or worker and box)
-        if state1.worker_loc != state2.worker_loc:
+        if state1[1] != state2[1]:
             c = c + 1
-        if state1.box_locs != state2.box_locs:
+        if state1[0] != state2[0]:
             # Find the index of the box and add the weight of the box as part of the cost, using the index
             # to identify the cost of the box movement
-            box_moved = [(x,y) for (x,y) in state1.box_locs if (x,y) not in state2.box_locs]
-            box_index = state1.box_locs.index(box_moved[0])
-            c = c + self.warehouse.weights[box_index]
+            box_moved = [(x,y) for (x,y) in state2[0] if (x,y) not in state1[0]]
+            box_index = state2[0].index(box_moved[0])
+            c = c + self.problem.weights[box_index]
         return c
 
-    
-    def value(self, state):
-        """For optimization problems, each state has a value.  Hill-climbing
-        and related algorithms try to maximize this value.
-        
-        This is essentially the heuristic that we'll be using (h function)
-        """
+    def h(self, state):
         # Need to take into consideration the distance of the worker from the nearest box (manhattan)
         # So h(n) = something + dist(worker --> nearest box)
         total = 0
         
         # Iterate through the boxes, determining the closest box to the worker 
         """ (that isn't in a target) """
-        worker_loc = state.worker_loc
-        box_locs = state.box_locs
+        worker_loc = state.state[1]
+        box_locs = state.state[0]
         differences = []
         for (x,y) in box_locs:
             differences.append((abs(x - worker_loc[0]), abs(y - worker_loc[1])))
         worker_dist_to_nearest_box = min(differences)
 
         # Add the manhattan distance to the total
-        total += (worker_dist_to_nearest_box[0] + worker_dist_to_nearest_box[1])
+        total += (worker_dist_to_nearest_box[0] + worker_dist_to_nearest_box[1] - 1)
 
         # Iterating through the boxes in weight order, determine the minimum distance to an unclaimed target
-        targets = self.warehouse.targets
+        targets = self.problem.targets
         
         # Check if there are any weights, if not, don't take them into consideration
-        weights = self.warehouse.weights
+        weights = self.problem.weights
         if len(weights) == 0: # OR IF ALL WEIGHTS ARE EQUAL:
             for i in range(len(box_locs)):
                 # Find manhattan distance to each unclaimed target and use smallest value
@@ -609,21 +615,22 @@ class SokobanPuzzle(search.Problem):
                 current_box = box_locs[highest_weight_index]
                 # Find manhattan distance to each unclaimed target and use smallest value
                 smallest_dist = (10000, 10000)
-                target_index = -1
+                target_index = 10000
                 for target in unclaimed_targets:
-                    target_index += 1
                     man_dist = tuple(map(operator.sub, current_box, target))
                     man_dist = (abs(man_dist[0]), abs(man_dist[1]))
                     if man_dist < smallest_dist:
                         smallest_dist = man_dist
+                        target_index = unclaimed_targets.index(target)
                 # Smallest distance has been found, add to get total manhattan steps
                 total += (smallest_dist[0] + smallest_dist[1])
                 # Remove claimed target
-                unclaimed_targets.remove(target)
+                unclaimed_targets.remove(unclaimed_targets[target_index])
 
         return total
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 def check_elem_action_seq(warehouse, action_seq):
     '''
@@ -692,6 +699,20 @@ def check_elem_action_seq(warehouse, action_seq):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def trace_path(node):
+    path = []
+    while node.parent:
+        path.insert(0, node.action) # insert at index 0 (start)
+        node = node.parent
+    return path
+    
+def print_solution(goal_node):
+    path = goal_node.path()
+    print("Solution Steps:\n")
+    for node in path:
+        if node.action is not None:
+            print("{0},".format(node.action))
+
 def solve_weighted_sokoban(warehouse):
     '''
     This function analyses the given warehouse.
@@ -726,13 +747,13 @@ def solve_weighted_sokoban(warehouse):
     '''
 
     if warehouse.__str__().count(".") == 0: # boxes are already on targets
-        S = []
-        C = 0
-        return S, C
+        return "Impossible", None
     else: # puzzle needs to be solved
-        sokoban_puzzle = SokobanPuzzle(warehouse)
-        S = search.astar_graph_search(sokoban_puzzle, sokoban_puzzle.value())
-        C = sokoban_puzzle.path_cost()
+        sp = SokobanPuzzle(warehouse)
+        astar = search.astar_graph_search(sp)
+        print_solution(astar)
+        S = trace_path(astar)
+        C = astar.path_cost
         return S, C
 
 
