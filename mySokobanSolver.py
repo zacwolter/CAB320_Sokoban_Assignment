@@ -739,8 +739,8 @@ def solve_weighted_sokoban(warehouse):
     Method:
     - If boxes in targets return S = [], C = 0 
     - solve sokoban with problem class
-        - initialise Problem class (warehouse)
         - call astar_graph_search
+        - calculate path_cost
     - return S and C
 
 
@@ -754,6 +754,7 @@ def solve_weighted_sokoban(warehouse):
         print_solution(astar)
         S = trace_path(astar)
         C = astar.path_cost
+
         return S, C
 
 
