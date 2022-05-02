@@ -61,22 +61,28 @@ def extract_taboo_locations(lines):
 
 def flood_fill_search(cells, y, x, newcolor):
     #will be used as auxilary function to make job easier
+    #uses DFS algorithm for flood fill
     Row, Column = len(cells),len(cells[0])#get the size of the workspace area
     Q = collections.deque([(y,x)]) 
-    color = ['@','.','$','*',' ']
-    seen = set()
-    while Q:
-        row, column = Q.popleft() #store the row column that was in the 1st position of Q
-        cells[row][column] = newcolor
+    color = ['@','.','$','*',' '] #all possible string values within the workspace
+    seen = set()#create a set called seen to store cells already passed through
+    while Q: #while there are still values in Q continue the loop 
+        row, column = Q.popleft() #store the row column that was in the 1st position of Q whilst removing it from Q
+        cells[row][column] = newcolor #whatever the row,column value was first in Q, take that index position in
+        #the working cell area with the value to indicate that its inside the working area
         if (row,column) in seen:
-            continue
+            continue #self-explanatory if index/position of current cell being looked at has already been covered
+        #skip it to reduce unnecessary computing time 
         seen.add((row,column))#add the row and column in the first Q array and add to seen set
         #as we have already seen it 
-        for add_r,add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):
-            new_r=row+add_r
-            new_c=column+add_c
+        for add_r,add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):#consider the cells above,below,right and left
+            #of the current cell
+            new_r=row+add_r #get the new row values of cells adjacent
+            new_c=column+add_c #get new column values of cells adjacent
             if 0<=new_r<Row and 0<=new_c<Column and cells[new_r][new_c] in color:
-                Q.append((new_r,new_c))
+                Q.append((new_r,new_c)) #if the new column or row values are within the bounds
+                #of the working area and the values have a viable value therefore 
+                #they will be appended to be looked at in the next loop 
     return cells
 
 def taboo_cells(warehouse):
