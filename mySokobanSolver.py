@@ -133,22 +133,23 @@ def taboo_cells(warehouse):
     empty_spaces_inside = []
 
     flood_fill_test=[]
-    cells = str(warehouse).split('\n')#make it into a list
+    cells = str(warehouse).split('\n')#make it into a list storing each row of the warehouse.txt file
+    #as a string
     idx=0
 
     for strings in cells:
-        cells[idx] = list(strings)
+        cells[idx] = list(strings)#store each component of the string from cells above individually
         idx += 1
-    flood_fill_test = cells[:]
-    for row_index, i in enumerate(cells):
+    flood_fill_test = cells[:] #flood_fill_test is essentially a temp variable copying all values from cells
+    for row_index, i in enumerate(cells): #nested for loop to find walls in work area to replace with value 5
         for col_index, a in enumerate(i):
             if a == "#":
                 flood_fill_test[row_index][col_index] = 5 #now we have a list filled with 5's as walls
     starting_point = target_locs[0]     #we know that the target is always in the working zone, therefore take first 
     #target value therefore starting point is the index of the first target
-    #flood_fill_test[starting_point[1]][starting_point[0]]=1
     flood_fill_results = flood_fill_search(flood_fill_test, starting_point[1], starting_point[0], 1)
-
+    #get the 'filled' layout of the warehouse working area. Showing 5 for walls, 1 for moveable space 
+    #the purpose of this was to not list corners outside the working area as taboo cells
     for i in range(num_rows - 1):
         if i == 0:
             continue
@@ -157,8 +158,8 @@ def taboo_cells(warehouse):
         # walls_in_row.sort()
         empty_spaces_inside_row = []
         for j in range(len(flood_fill_results[i])):
-            if flood_fill_results[i][j] == 1:
-                empty_spaces_inside_row.append((j, i))
+            if flood_fill_results[i][j] == 1: #check if the current cell iterated on is an empty space inside working area
+                empty_spaces_inside_row.append((j, i)) #add the iterated cell to current known spaces inside working area
         empty_spaces_inside.append(empty_spaces_inside_row)
 
     # Now check Rule 1 - check if each free space is a corner and not a target
@@ -207,8 +208,8 @@ def taboo_cells(warehouse):
     current_col = 0
     prev_col = 0
     for tb_cell in tb_cell_tracker:
-        prev_col = current_col
-        current_col = tb_cell[0]
+        prev_col = current_col #store past column iterated
+        current_col = tb_cell[0] #current column is then taken as the current column iterated 
         if current_col == prev_col:
             continue
         tb_cell_same_col = [cell for cell in tb_cells if tb_cell[0] == cell[0]]
