@@ -201,8 +201,30 @@ wall_locs = wh.walls
 num_cols = wh.ncols
 target_locs = wh.targets
 
+def flood_fill(cells,y,x,newcolor):
+    #will be used as auxilary function to make job easier
+    Row,Column=len(cells),len(cells[0])#get the size of the workspace area
+    Q=collections.deque([(y,x)]) 
+    color=['@','.','$','*',' ']
+    seen=set()
+    while Q:
+        row,column=Q.popleft() #store the row column that was in the 1st position of Q
+        cells[row][column]=newcolor
+        if (row,column) in seen:
+            continue
+        seen.add((row,column))#add the row and column in the first Q array and add to seen set
+        #as we have already seen it 
+        for add_r,add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+            new_r=row+add_r
+            new_c=column+add_c
+            if 0<=new_r<Row and 0<=new_c<Column and cells[new_r][new_c] in color:
+                Q.append((new_r,new_c))
+    return cells
+
+
 tb_cells = []
 empty_spaces_inside = []
+
 for i in range(num_cols - 1):
     if i == 0:
         continue

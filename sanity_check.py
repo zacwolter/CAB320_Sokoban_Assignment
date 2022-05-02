@@ -28,7 +28,7 @@ except ModuleNotFoundError:
     
 def test_taboo_cells():
     wh = Warehouse()
-    wh.load_warehouse("./warehouses/warehouse_01.txt")
+    wh.load_warehouse("./warehouses/warehouse_8a.txt")
     expected_answer = '####  \n#X #  \n#  ###\n#   X#\n#   X#\n#XX###\n####  '
     answer = taboo_cells(wh)
     fcn = test_taboo_cells
@@ -67,7 +67,7 @@ def test_check_elem_action_seq():
 
 def test_solve_weighted_sokoban():
     wh = Warehouse()    
-    wh.load_warehouse( "./warehouses/warehouse_8a.txt")
+    wh.load_warehouse( "./warehouses/warehouse_143.txt")
     # first test
     answer, cost = solve_weighted_sokoban(wh)
 

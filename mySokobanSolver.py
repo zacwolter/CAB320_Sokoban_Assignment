@@ -32,6 +32,8 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 from logging import exception
 import search 
 import operator
+import collections
+import sokoban
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -46,6 +48,36 @@ def my_team():
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+def extract_taboo_locations(lines):
+        '''
+        Extract taboo cell positional information from the the list of string 'lines'.
+        The list of string 'lines' represents the puzzle.
+        This function returns the coordinates of all taboo cells in (column, row) format.
+        '''
+        split_lines = lines.split('\n')
+        tb_cells = list(sokoban.find_2D_iterator(split_lines, "X"))
+        tb_cells.sort()
+        return tb_cells
+
+def flood_fill_search(cells, y, x, newcolor):
+    #will be used as auxilary function to make job easier
+    Row, Column = len(cells),len(cells[0])#get the size of the workspace area
+    Q = collections.deque([(y,x)]) 
+    color = ['@','.','$','*',' ']
+    seen = set()
+    while Q:
+        row, column = Q.popleft() #store the row column that was in the 1st position of Q
+        cells[row][column] = newcolor
+        if (row,column) in seen:
+            continue
+        seen.add((row,column))#add the row and column in the first Q array and add to seen set
+        #as we have already seen it 
+        for add_r,add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):
+            new_r=row+add_r
+            new_c=column+add_c
+            if 0<=new_r<Row and 0<=new_c<Column and cells[new_r][new_c] in color:
+                Q.append((new_r,new_c))
+    return cells
 
 def taboo_cells(warehouse):
     '''  
@@ -81,7 +113,7 @@ def taboo_cells(warehouse):
     # Gather all necessary information from the warehouse (walls and target locations)
     wall_locs = warehouse.walls
     target_locs = warehouse.targets
-    num_cols = warehouse.ncols
+    num_rows = warehouse.nrows
 
     # Rule 1: Cells that are not targets and are surrounded by walls are taboo
     # Assumptions:
@@ -93,16 +125,34 @@ def taboo_cells(warehouse):
     # Start by identifying all interior empty spaces (incl. targets just to be safe)
     tb_cells = []
     empty_spaces_inside = []
-    for i in range(num_cols - 1):
+
+    flood_fill_test=[]
+    cells = str(warehouse).split('\n')#make it into a list
+    idx=0
+
+    for strings in cells:
+        cells[idx] = list(strings)
+        idx += 1
+    flood_fill_test = cells[:]
+    for row_index, i in enumerate(cells):
+        for col_index, a in enumerate(i):
+            if a == "#":
+                flood_fill_test[row_index][col_index] = 5 #now we have a list filled with 5's as walls
+    starting_point = target_locs[0]     #we know that the target is always in the working zone, therefore take first 
+    #target value therefore starting point is the index of the first target
+    #flood_fill_test[starting_point[1]][starting_point[0]]=1
+    flood_fill_results = flood_fill_search(flood_fill_test, starting_point[1], starting_point[0], 1)
+
+    for i in range(num_rows - 1):
         if i == 0:
             continue
         current_row = i
-        walls_in_row = [(x,y) for (x,y) in wall_locs if x == i]
-        walls_in_row.sort()
-        first_wall_in_row = walls_in_row[0]
-        last_wall_in_row = walls_in_row[-1]
-        empty_spaces_inside_row = [(current_row,y) for y in range(first_wall_in_row[1], last_wall_in_row[1]+1) 
-                                if (current_row,y) not in walls_in_row]
+        # walls_in_row = [(x,y) for (x,y) in wall_locs if x == i]
+        # walls_in_row.sort()
+        empty_spaces_inside_row = []
+        for j in range(len(flood_fill_results[i])):
+            if flood_fill_results[i][j] == 1:
+                empty_spaces_inside_row.append((j, i))
         empty_spaces_inside.append(empty_spaces_inside_row)
 
     # Now check Rule 1 - check if each free space is a corner and not a target
@@ -331,25 +381,29 @@ def taboo_cells(warehouse):
                             tb_cells.append(cell)
                             tb_cells.sort()
 
-    X,Y = zip(*warehouse.walls) # pythonic version of the above
+    X, Y = zip(*warehouse.walls)
     x_size, y_size = 1+max(X), 1+max(Y)
     
+    # max_index = -1
+    # for i in range(max(Y)+1):
+    #     if max_index < i:
+    #             max_index = i
+    #     elif max_index == i:
+    #         continue
+    #     for j in range(max(X)):
+    #         print(str(i) + ", " + str(j))
+            
+
     vis = [[" "] * x_size for y in range(y_size)]
-    # can't use  vis = [" " * x_size for y ...]
-    # because we want to change the characters later
     for (x,y) in warehouse.walls:
         vis[y][x] = "#"
     for (x,y) in tb_cells:
         vis[y][x] = "X"
-    return "\n".join(["".join(line) for line in vis])
+    string_version = "\n".join(["".join(line) for line in vis])
+    return string_version
     
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-class State:
-    def __init__(self, warehouse):
-        self.worker = warehouse.worker
-        self.boxes = warehouse.boxes
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -374,7 +428,7 @@ class SokobanPuzzle(search.Problem):
     def __init__(self, warehouse):
         self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
         self.problem = warehouse
-        # self.taboo = taboo_cells(warehouse)
+        self.taboo = extract_taboo_locations(taboo_cells(warehouse))
 
     def actions(self, state):
         """
@@ -389,6 +443,7 @@ class SokobanPuzzle(search.Problem):
         worker_loc = state[1]
         box_locs = state[0]
         wall_locs = self.problem.walls
+        tb_cells = self.taboo
 
         # Next check where the worker can move and append it to the list of possible actions
         legal_moves = []    # list of legal actions
@@ -400,15 +455,15 @@ class SokobanPuzzle(search.Problem):
             # There is a box above the worker, need to check if there are any boxes/walls above the box
             blocking_box_above = [box for box in box_locs if box[0] == boxes_above[0][0] and box[1] == boxes_above[0][1] - 1]
             blocking_wall_above = [wall for wall in wall_locs if wall[0] == boxes_above[0][0] if wall[1] == boxes_above[0][1] - 1]
-            # If there is no blocking box or wall in the space above, append "UP" as a legal move 
-            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
-            if len(blocking_box_above) == 0 and len(blocking_wall_above) == 0:
+            taboo_cell_above = [cell for cell in tb_cells if cell[0] == boxes_above[0][0] if cell[1] == boxes_above[0][1] - 1]
+            # If there is no blocking box or wall or taboo cell in the space above, append "UP" as a legal move 
+            if len(blocking_box_above) == 0 and len(blocking_wall_above) == 0 and len(taboo_cell_above) == 0:
                 legal_moves.append("Up")
         elif len(walls_above) > 0:
             # There is a wall above the worker, therefore we cannot move Up
             pass
         else:
-            # There is no wall or box above the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            # There is no wall or box above the player
             legal_moves.append("Up")
 
         # DOWN: Check if there is a wall or a box in the space below the worker
@@ -418,15 +473,15 @@ class SokobanPuzzle(search.Problem):
             # There is a box below the worker, need to check if there are any boxes/walls below the box
             blocking_box_below = [box for box in box_locs if box[0] == boxes_below[0][0] and box[1] == boxes_below[0][1] + 1]
             blocking_wall_below = [wall for wall in wall_locs if wall[0] == boxes_below[0][0] if wall[1] == boxes_below[0][1] + 1]
+            taboo_cell_below = [cell for cell in tb_cells if cell[0] == boxes_below[0][0] if cell[1] == boxes_below[0][1] + 1]
             # If there is no blocking box or wall in the space below, append "DOWN" as a legal move 
-            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
-            if len(blocking_box_below) == 0 and len(blocking_wall_below) == 0:
+            if len(blocking_box_below) == 0 and len(blocking_wall_below) == 0 and len(taboo_cell_below) == 0:
                 legal_moves.append("Down")
         elif len(walls_below) > 0:
             # There is a wall below the worker, therefore we cannot move down
             pass
         else:
-            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            # There is no wall or box below the player
             legal_moves.append("Down")
 
         # LEFT: Check if there is a wall or a box in the space to the left of the worker
@@ -436,15 +491,15 @@ class SokobanPuzzle(search.Problem):
             # There is a box to the left of the worker, need to check if there are any boxes/walls to the left of the box
             blocking_box_left = [box for box in box_locs if box[0] == boxes_left[0][0] - 1 and box[1] == boxes_left[0][1]]
             blocking_wall_left = [wall for wall in wall_locs if wall[0] == boxes_left[0][0] - 1 if wall[1] == boxes_left[0][1]]
+            taboo_cell_left = [cell for cell in tb_cells if cell[0] == boxes_left[0][0] - 1 if cell[1] == boxes_left[0][1]]
             # If there is no blocking box or wall in the space to the left, append "LEFT" as a legal move 
-            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
-            if len(blocking_box_left) == 0 and len(blocking_wall_left) == 0:
+            if len(blocking_box_left) == 0 and len(blocking_wall_left) == 0 and len(taboo_cell_left) == 0:
                 legal_moves.append("Left")
         elif len(walls_left) > 0:
             # There is a wall below the worker, therefore we cannot move up
             pass
         else:
-            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            # There is no wall or box below the player
             legal_moves.append("Left")
 
         # RIGHT: Check if there is a wall or a box in the space to the right of the worker
@@ -454,15 +509,15 @@ class SokobanPuzzle(search.Problem):
             # There is a box to the right of the worker, need to check if there are any boxes/walls to the right of the box
             blocking_box_right = [(x,y) for (x,y) in box_locs if x == boxes_right[0][0] + 1 if boxes_right[0][1] == y]
             blocking_wall_right = [(x,y) for (x,y) in wall_locs if x == boxes_right[0][0] + 1 if boxes_right[0][1] == y]
+            taboo_cell_right = [cell for cell in tb_cells if cell[0] == boxes_right[0][0] + 1 if cell[1] == boxes_right[0][1]]
             # If there is no blocking box or wall in the space to the right, append "RIGHT" as a legal move 
-            # TO BE CHANGED ONCE TABOO CELLS ARE IMPLEMENTED, NEED TO CONSIDER THEM ALSO
-            if len(blocking_box_right) == 0 and len(blocking_wall_right) == 0:
+            if len(blocking_box_right) == 0 and len(blocking_wall_right) == 0 and len(taboo_cell_right) == 0:
                 legal_moves.append("Right")
         elif len(walls_right) > 0:
             # There is a wall below the worker, therefore we cannot move up
             pass
         else:
-            # There is no wall or box below the player (WILL NEED TO CHECK FOR TABOO SPACES)
+            # There is no wall or box below the player
             legal_moves.append("Right")
         
         return legal_moves
@@ -751,11 +806,13 @@ def solve_weighted_sokoban(warehouse):
     else: # puzzle needs to be solved
         sp = SokobanPuzzle(warehouse)
         astar = search.astar_graph_search(sp)
-        print_solution(astar)
-        S = trace_path(astar)
-        C = astar.path_cost
-
-        return S, C
+        if astar == None:
+            return "Impossible", None
+        else:
+            print_solution(astar)
+            S = trace_path(astar)
+            C = astar.path_cost
+            return S, C
 
 
 

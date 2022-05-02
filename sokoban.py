@@ -235,10 +235,6 @@ if __name__ == "__main__":
     wh = Warehouse()
     wh.load_warehouse("./warehouses/warehouse_03.txt")
 
-    action_seq = ["Right","Up","Up","Left"]
-
-    check_elem_action_seq(wh,action_seq)
-
     print(wh)   # this calls    wh.__str__()
 
 
