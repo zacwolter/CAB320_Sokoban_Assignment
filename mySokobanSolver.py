@@ -212,8 +212,10 @@ def taboo_cells(warehouse):
         current_col = tb_cell[0] #current column is then taken as the current column iterated 
         if current_col == prev_col:
             continue
+        #if current taboo cell shares same value as itself (i.e 1 from flood cell process)
+        #then cell gets stored as tuple
         tb_cell_same_col = [cell for cell in tb_cells if tb_cell[0] == cell[0]]
-
+        
         if len(tb_cell_same_col) < 2:
             continue
         if len(tb_cell_same_col) == 2:
@@ -387,8 +389,9 @@ def taboo_cells(warehouse):
                         for cell in cells_between:
                             tb_cells.append(cell)
                             tb_cells.sort()
-
+    #seperate into X and Y components from the warehouse's walls list  
     X, Y = zip(*warehouse.walls)
+    #get the dimensions of the working warehouse area 
     x_size, y_size = 1+max(X), 1+max(Y)
     
     # max_index = -1
@@ -400,7 +403,7 @@ def taboo_cells(warehouse):
     #     for j in range(max(X)):
     #         print(str(i) + ", " + str(j))
             
-
+    #create a new variable containing the #, spaces and X denoting the taboo cells 
     vis = [[" "] * x_size for y in range(y_size)]
     for (x,y) in warehouse.walls:
         vis[y][x] = "#"
