@@ -903,7 +903,6 @@ def solve_weighted_sokoban(warehouse):
         if astar == None: # Puzzle is impossible to solve due to some constraint
             return "Impossible", None
         else:
-            print_solution(astar)
             S = trace_path(astar)
             C = astar.path_cost
             return S, C
