@@ -26,10 +26,6 @@ Last modified by 2022-03-27  by f.maire@qut.edu.au
 
 '''
 
-# You have to make sure that your code works with 
-# the files provided (search.py and sokoban.py) as your code will be tested 
-# with these files
-from logging import exception
 import search 
 import operator
 import collections
@@ -49,40 +45,50 @@ def my_team():
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def extract_taboo_locations(lines):
-        '''
-        Extract taboo cell positional information from the the list of string 'lines'.
-        The list of string 'lines' represents the puzzle.
-        This function returns the coordinates of all taboo cells in (column, row) format.
-        '''
-        split_lines = lines.split('\n')
-        tb_cells = list(sokoban.find_2D_iterator(split_lines, "X"))
-        tb_cells.sort()
-        return tb_cells
+    '''
+    Extract taboo cell positional information from the the list of string 'lines'.
+    
+    @param lines:
+        The list of strings representing the problem instance.
+    
+    @return
+        The coordinates of all taboo cells in (column, row) format.
+
+    Author: Zac Wolter
+    '''
+    split_lines = lines.split('\n')
+    tb_cells = list(sokoban.find_2D_iterator(split_lines, "X"))
+    tb_cells.sort()
+    return tb_cells
 
 def flood_fill_search(cells, y, x, newcolor):
-    #will be used as auxilary function to make job easier
-    #uses DFS algorithm for flood fill
-    Row, Column = len(cells),len(cells[0])#get the size of the workspace area
+    '''
+    Auxiliary function for finding all cells within a given warehouse.
+    Based on a DFS algorithm for flood fill
+
+    Author: Sebastian Poh
+    '''
+    Row, Column = len(cells),len(cells[0])  # get the size of the workspace area
     Q = collections.deque([(y,x)]) 
-    color = ['@','.','$','*',' '] #all possible string values within the workspace
-    seen = set()#create a set called seen to store cells already passed through
-    while Q: #while there are still values in Q continue the loop 
-        row, column = Q.popleft() #store the row column that was in the 1st position of Q whilst removing it from Q
-        cells[row][column] = newcolor #whatever the row,column value was first in Q, take that index position in
-        #the working cell area with the value to indicate that its inside the working area
-        if (row,column) in seen:
-            continue #self-explanatory if index/position of current cell being looked at has already been covered
-        #skip it to reduce unnecessary computing time 
-        seen.add((row,column))#add the row and column in the first Q array and add to seen set
-        #as we have already seen it 
-        for add_r,add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):#consider the cells above,below,right and left
-            #of the current cell
-            new_r=row+add_r #get the new row values of cells adjacent
-            new_c=column+add_c #get new column values of cells adjacent
-            if 0<=new_r<Row and 0<=new_c<Column and cells[new_r][new_c] in color:
-                Q.append((new_r,new_c)) #if the new column or row values are within the bounds
-                #of the working area and the values have a viable value therefore 
-                #they will be appended to be looked at in the next loop 
+    color = ['@','.','$','*',' ']   # All possible string values within the workspace
+    seen = set()    # Create a set called seen to store cells already passed through
+    while Q:
+        row, column = Q.popleft() # Store the row column that was in the 1st position of Q whilst removing it from Q
+        # Whatever the row,column value was first in Q, take that index position in the working cell area with
+        # the value to indicate that its inside the working area
+        cells[row][column] = newcolor 
+        if (row, column) in seen:
+            # Skip it to reduce unnecessary computing time 
+            continue 
+        seen.add((row, column))  # Add the row and column in the first Q array and add to seen set
+        for add_r, add_c in ((1, 0), (0, 1), (-1, 0), (0, -1)):  # Consider the cells above, below, right and left
+            new_r = row + add_r # Get the new row values of cells adjacent
+            new_c = column + add_c # Get new column values of cells adjacent
+            if 0 <= new_r < Row and 0 <= new_c < Column and cells[new_r][new_c] in color:
+                # If the new column or row values are within the bounds
+                # of the working area and the values have a viable value therefore 
+                # they will be appended to be looked at in the next loop 
+                Q.append((new_r, new_c)) 
     return cells
 
 def taboo_cells(warehouse):
@@ -109,6 +115,8 @@ def taboo_cells(warehouse):
        a '#' and the taboo cells marked with a 'X'.  
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
+    
+    Authors: Sebastian Poh and Zac Wolter
     '''
     
     #The rules identified from research are:
@@ -133,33 +141,39 @@ def taboo_cells(warehouse):
     empty_spaces_inside = []
 
     flood_fill_test=[]
-    cells = str(warehouse).split('\n')#make it into a list storing each row of the warehouse.txt file
-    #as a string
+    # Create a string representation of the warehouse, split into rows
+    cells = str(warehouse).split('\n')
     idx=0
 
     for strings in cells:
-        cells[idx] = list(strings)#store each component of the string from cells above individually
+        # Store each component of the string from cells above individually
+        cells[idx] = list(strings)
         idx += 1
-    flood_fill_test = cells[:] #flood_fill_test is essentially a temp variable copying all values from cells
-    for row_index, i in enumerate(cells): #nested for loop to find walls in work area to replace with value 5
+
+    flood_fill_test = cells[:]  # Temp variable copying all values from cells
+    
+    # Iterate through the cells, setting the wall locations to the value '5' (no particular reason, just
+    # to distinguish walls from warehouse interior spaces)
+    for row_index, i in enumerate(cells):
         for col_index, a in enumerate(i):
             if a == "#":
-                flood_fill_test[row_index][col_index] = 5 #now we have a list filled with 5's as walls
-    starting_point = target_locs[0]     #we know that the target is always in the working zone, therefore take first 
-    #target value therefore starting point is the index of the first target
+                flood_fill_test[row_index][col_index] = 5 
+
+    # We know that the target is always in the working zone, therefore take first 
+    # target value therefore starting point is the index of the first target
+    starting_point = target_locs[0]     
     flood_fill_results = flood_fill_search(flood_fill_test, starting_point[1], starting_point[0], 1)
-    #get the 'filled' layout of the warehouse working area. Showing 5 for walls, 1 for moveable space 
-    #the purpose of this was to not list corners outside the working area as taboo cells
+
+    # Get the 'filled' layout of the warehouse working area. Showing 5 for walls, 1 for moveable space 
+    # the purpose of this was to not list corners outside the working area as taboo cells
     for i in range(num_rows - 1):
         if i == 0:
             continue
         current_row = i
-        # walls_in_row = [(x,y) for (x,y) in wall_locs if x == i]
-        # walls_in_row.sort()
         empty_spaces_inside_row = []
         for j in range(len(flood_fill_results[i])):
-            if flood_fill_results[i][j] == 1: #check if the current cell iterated on is an empty space inside working area
-                empty_spaces_inside_row.append((j, i)) #add the iterated cell to current known spaces inside working area
+            if flood_fill_results[i][j] == 1: # Check if the current cell iterated on is an empty space inside working area
+                empty_spaces_inside_row.append((j, i)) # Add the iterated cell to current known spaces inside working area
         empty_spaces_inside.append(empty_spaces_inside_row)
 
     # Now check Rule 1 - check if each free space is a corner and not a target
@@ -172,7 +186,6 @@ def taboo_cells(warehouse):
             num_surrounding_walls = 0
             surrounding_sides = []
             # Check for at least two walls surrounding the current cell (above, below, left or right)
-            # If surrounding cells are opposite sides and only two cells surrounding, then NOT taboo
             # ABOVE
             if (space[0]-1, space[1]) in wall_locs:
                 num_surrounding_walls += 1
@@ -190,6 +203,7 @@ def taboo_cells(warehouse):
                 num_surrounding_walls += 1
                 surrounding_sides.append("RIGHT")
             
+            # If surrounding cells are opposite sides and only two cells surrounding, then NOT taboo
             if num_surrounding_walls == 2:
                 if "ABOVE" in surrounding_sides and "BELOW" in surrounding_sides:
                     # IGNORE as box can pass through
@@ -208,12 +222,11 @@ def taboo_cells(warehouse):
     current_col = 0
     prev_col = 0
     for tb_cell in tb_cell_tracker:
-        prev_col = current_col #store past column iterated
-        current_col = tb_cell[0] #current column is then taken as the current column iterated 
+        prev_col = current_col # Store past column iterated
+        current_col = tb_cell[0] # Current column is then taken as the current column iterated 
         if current_col == prev_col:
             continue
-        #if current taboo cell shares same value as itself (i.e 1 from flood cell process)
-        #then cell gets stored as tuple
+        # Gather all taboo cells that share the same column as tb_cell
         tb_cell_same_col = [cell for cell in tb_cells if tb_cell[0] == cell[0]]
         
         if len(tb_cell_same_col) < 2:
@@ -231,7 +244,7 @@ def taboo_cells(warehouse):
                     if cell in target_locs:
                         target_found = True
                 if target_found:
-                    # One fo the cells was a target, so ignore
+                    # One fo the cells was a target, so continue
                     continue
                 # Now ensure that all cells have at least one wall adjacent to them
                 cells_checked_positive = 0
@@ -271,7 +284,7 @@ def taboo_cells(warehouse):
                         if cell in target_locs:
                             target_found = True
                     if target_found:
-                        # One fo the cells was a target, so ignore
+                        # One fo the cells was a target, so continue
                         continue
                     # Now ensure that all cells have at least one wall adjacent to them
                     cells_checked_positive = 0
@@ -305,11 +318,14 @@ def taboo_cells(warehouse):
         current_row = tb_cell[1]
         if current_row == prev_row:
             continue
+        # Gather all taboo cells that share the same row value as tb_cell
         tb_cell_same_row = [cell for cell in tb_cells if tb_cell[1] == cell[1]]
 
+        # If there is only 1 taboo cell in the row, continue
         if len(tb_cell_same_row) < 2:
             continue
-        if tb_cell_same_row[0][0] == tb_cell_same_row[1][0] - 1:
+        # If there are two taboo cells next to each other, continue
+        if len(tb_cell_same_row) == 2 and tb_cell_same_row[0][0] == tb_cell_same_row[1][0] - 1:
             continue
         if len(tb_cell_same_row) == 2:
             # Check there are no walls between the two cells
@@ -389,27 +405,20 @@ def taboo_cells(warehouse):
                         for cell in cells_between:
                             tb_cells.append(cell)
                             tb_cells.sort()
-    #seperate into X and Y components from the warehouse's walls list  
+    # Seperate into X and Y components from the warehouse's walls list  
     X, Y = zip(*warehouse.walls)
-    #get the dimensions of the working warehouse area 
+    # Get the dimensions of the working warehouse area 
     x_size, y_size = 1+max(X), 1+max(Y)
-    
-    # max_index = -1
-    # for i in range(max(Y)+1):
-    #     if max_index < i:
-    #             max_index = i
-    #     elif max_index == i:
-    #         continue
-    #     for j in range(max(X)):
-    #         print(str(i) + ", " + str(j))
             
-    #create a new variable containing the #, spaces and X denoting the taboo cells 
+    # Create a new variable containing the #, spaces and X denoting the taboo cells 
     vis = [[" "] * x_size for y in range(y_size)]
     for (x,y) in warehouse.walls:
         vis[y][x] = "#"
     for (x,y) in tb_cells:
         vis[y][x] = "X"
     string_version = "\n".join(["".join(line) for line in vis])
+
+    # Return the string representation of the warehouse, containing only walls and taboo cells
     return string_version
     
 
@@ -426,16 +435,18 @@ class SokobanPuzzle(search.Problem):
     
     '''
 
-    #     Revisit the sliding puzzle and the pancake puzzle for inspiration!
-    #
-    #     Note that you will need to add several functions to 
-    #     complete this class. For example, a 'result' method is needed
-    #     to satisfy the interface of 'search.Problem'.
-    #
-    #     You are allowed (and encouraged) to use auxiliary functions and classes
-
-    
     def __init__(self, warehouse):
+        """
+        Initialises the SokobanPuzzle instance, creating a state representation that consists
+        of the worker and box locations, a problem instance stored in self.problem and a list
+        of taboo cell locations for use in the actions function.
+
+        @param warehouse:
+            A Warehouse object containing information about the given warehouse, such as wall,
+            worker, box and target locations as well as box weights.
+
+        Author: Zac Wolter
+        """
         self.initial = tuple(warehouse.boxes), tuple(warehouse.worker)
         self.problem = warehouse
         self.taboo = extract_taboo_locations(taboo_cells(warehouse))
@@ -444,12 +455,17 @@ class SokobanPuzzle(search.Problem):
         """
         Return the list of actions that can be executed in the given state.
         
-        """
-        # THIS IS WHERE WE NEED TO BE ABLE TO DEFINE ALL AVAILABLE ACTIONS IN A GIVEN STATE
-        #   - check_elem_action_seq seems to be more about testing a long sequence of actions
-        #     when combined if they're legal or not
+        @param state:
+            A state representing the current location of all boxes and the worker in the warehouse.
         
-        # First gain an understanding of the current state
+        @return:
+            A list of strings (including "Up", "Down", "Left", "Right") denoting all legal actions
+            in the current state.
+
+        Author: Zac Wolter
+        """
+        
+        # First gain an understanding of the current state and problem instance
         worker_loc = state[1]
         box_locs = state[0]
         wall_locs = self.problem.walls
@@ -462,7 +478,7 @@ class SokobanPuzzle(search.Problem):
         boxes_above = [box for box in box_locs if box[0] == worker_loc[0] and box[1] == worker_loc[1] - 1]
         walls_above = [wall for wall in wall_locs if wall[0] == worker_loc[0] and wall[1] == worker_loc[1] - 1]
         if len(boxes_above) > 0:
-            # There is a box above the worker, need to check if there are any boxes/walls above the box
+            # There is a box above the worker, need to check if there are any boxes/walls/taboo cells above the box
             blocking_box_above = [box for box in box_locs if box[0] == boxes_above[0][0] and box[1] == boxes_above[0][1] - 1]
             blocking_wall_above = [wall for wall in wall_locs if wall[0] == boxes_above[0][0] if wall[1] == boxes_above[0][1] - 1]
             taboo_cell_above = [cell for cell in tb_cells if cell[0] == boxes_above[0][0] if cell[1] == boxes_above[0][1] - 1]
@@ -480,7 +496,7 @@ class SokobanPuzzle(search.Problem):
         boxes_below = [box for box in box_locs if box[0] == worker_loc[0] and box[1] == worker_loc[1] + 1]
         walls_below = [wall for wall in wall_locs if wall[0] == worker_loc[0] and wall[1] == worker_loc[1] + 1]
         if len(boxes_below) > 0:
-            # There is a box below the worker, need to check if there are any boxes/walls below the box
+            # There is a box below the worker, need to check if there are any boxes/walls/taboo cells below the box
             blocking_box_below = [box for box in box_locs if box[0] == boxes_below[0][0] and box[1] == boxes_below[0][1] + 1]
             blocking_wall_below = [wall for wall in wall_locs if wall[0] == boxes_below[0][0] if wall[1] == boxes_below[0][1] + 1]
             taboo_cell_below = [cell for cell in tb_cells if cell[0] == boxes_below[0][0] if cell[1] == boxes_below[0][1] + 1]
@@ -498,7 +514,7 @@ class SokobanPuzzle(search.Problem):
         boxes_left = [box for box in box_locs if box[0] == worker_loc[0] - 1 and box[1] == worker_loc[1]]
         walls_left = [wall for wall in wall_locs if wall[0] == worker_loc[0] - 1 and wall[1] == worker_loc[1]]
         if len(boxes_left) > 0:
-            # There is a box to the left of the worker, need to check if there are any boxes/walls to the left of the box
+            # There is a box to the left of the worker, need to check if there are any boxes/walls/taboo cells to the left of the box
             blocking_box_left = [box for box in box_locs if box[0] == boxes_left[0][0] - 1 and box[1] == boxes_left[0][1]]
             blocking_wall_left = [wall for wall in wall_locs if wall[0] == boxes_left[0][0] - 1 if wall[1] == boxes_left[0][1]]
             taboo_cell_left = [cell for cell in tb_cells if cell[0] == boxes_left[0][0] - 1 if cell[1] == boxes_left[0][1]]
@@ -506,10 +522,10 @@ class SokobanPuzzle(search.Problem):
             if len(blocking_box_left) == 0 and len(blocking_wall_left) == 0 and len(taboo_cell_left) == 0:
                 legal_moves.append("Left")
         elif len(walls_left) > 0:
-            # There is a wall below the worker, therefore we cannot move up
+            # There is a wall to the left of the worker, therefore we cannot move up
             pass
         else:
-            # There is no wall or box below the player
+            # There is no wall or box to the left of the player
             legal_moves.append("Left")
 
         # RIGHT: Check if there is a wall or a box in the space to the right of the worker
@@ -531,15 +547,22 @@ class SokobanPuzzle(search.Problem):
             legal_moves.append("Right")
         
         return legal_moves
-        
-        # REFER TO testing.py FOR TESTING OF THE ABOVE CODE (VERIFIED WORKS ON WAREHOUSE 3)
 
     def result(self, state, action):
         """
-        Return the state of the warehouse after the given action is completed
+        Computes the updated state of the warehouse after the given action is completed.
 
-        Simply need to check if we're moving just the worker or a box also (keep in mind the actions should
-        theoretically be legal based on the above function that checks it)
+        @param state:
+            The state representing the current location of the worker and boxes within the warehouse.
+
+        @param action:
+            A string represetning one of four actions that can be taken 
+            (including "Up", "Down", "Left", "Right")
+        
+        @return new_state:
+            An object identical to the parameter state, however, with updated worker and/or box locations.
+        
+        Author: Zac Wolter
         """
         worker_loc = state[1]
         box_locs = state[0]
@@ -595,13 +618,18 @@ class SokobanPuzzle(search.Problem):
     
     def goal_test(self, state):
         """
-        Make a comparison between the initialised goal state and the current state, taking no
-        notice of the position of the worker, just the position of the boxes
+        Make a comparison between the goal state and the current state, taking no
+        notice of the position of the worker, just the position of the boxes.
 
-        The legal move checking system will ensure that the worker is in a legal state
+        @param state:
+            The state representing the current location of the worker and boxes within the warehouse.
+        
+        @return
+            True if the given state matches the goal state, False if otherwise.
+        
+        Author: Zac Wolter
         """
         boxes = state[0]
-        #boxes = ((2,3), (11,3))
         if (set(boxes).issubset(set(self.problem.targets))):
             return True
         return False
@@ -610,7 +638,25 @@ class SokobanPuzzle(search.Problem):
     def path_cost(self, c, state1, action, state2): 
         """
         Return the cost of using action to travel from state1 to state2, taking into consideration
-        the weight of the box and knowing that the cost to move one space is 1.
+        the weight of the box and based on the information that the cost of the worker moving one 
+        space is 1.
+
+        @param c:
+            An integer representing the current cost of the node, to be updated with a new cost based
+            on the action taken between state1 and state2
+        
+        @param state1, state2:
+            The state representing the current location of the worker and boxes within the warehouse.
+            state1 represents the previous state, whilst state2 represents the current state.
+        
+        @param action:
+            Unused parameter
+        
+        @return c:
+            The existing cost + the cost to transistion from state1 to state2, taking into consideration
+            the weights of boxes that were moved and the worker's movements.
+        
+        Author: Zac Wolter
         """
         # Determine what has moved between the two states (could be just worker, or worker and box)
         if state1[1] != state2[1]:
@@ -624,12 +670,35 @@ class SokobanPuzzle(search.Problem):
         return c
 
     def h(self, state):
-        # Need to take into consideration the distance of the worker from the nearest box (manhattan)
-        # So h(n) = something + dist(worker --> nearest box)
+        """
+        Heuristic function that performs the following basic calculation to guide the A*
+        algorithm:
+            h(n) = (worker distance to nearest box) + 
+                   (Sum in descending order of box weights(nearest unclaimed target to the current box))
+
+        Example:
+            Left box weight = 1
+            Right box weight = 99
+                   ######
+                ###      ###
+                #  $ $      #
+                # .   @    .#
+                ############
+            
+            h(n) = 1 + (4 + 9) = 14 (please refer to attached assignment report for more detail)
+        
+        @param state:
+            The state representing the current location of the worker and boxes within the warehouse.
+        
+        @return total:
+            A value representing how close to the goal state the current state is.
+        
+        Author: Zac Wolter (with conceptual assistance from Max and Sebastian)
+        """
+        # Sum of all heuristic calculations
         total = 0
         
-        # Iterate through the boxes, determining the closest box to the worker 
-        """ (that isn't in a target) """
+        # Iterate through the boxes, determining the closest box to the worker
         worker_loc = state.state[1]
         box_locs = state.state[0]
         differences = []
@@ -722,6 +791,7 @@ def check_elem_action_seq(warehouse, action_seq):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
+    Author: Max Spokes
     '''
 
     # Where does the action result in the worker being located?
@@ -735,7 +805,8 @@ def check_elem_action_seq(warehouse, action_seq):
         elif action == 'Down': # Down move
             resultant_worker = (warehouse.worker[0], warehouse.worker[1] + 1)
         else:
-            exception("[check_elem_action_seq] Error parsing action")
+            print("[check_elem_action_seq][ERROR] Unable to parse action in action seq.\n")
+            exit(0)
 
         # Check if the action results in the worker hitting a wall (no box considered)
         if warehouse.walls.count(resultant_worker) > 0: # Worker's resultant location is the same as a wall location
@@ -765,13 +836,34 @@ def check_elem_action_seq(warehouse, action_seq):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def trace_path(node):
+    """
+    Function that retrieves the list of actions stored in the given Node object.
+
+    @param node:
+        A Node object containing a state and action, as well as a list of
+        parents containing actions.
+    
+    @return path:
+        A list of strings representing the list of actions taken to get to the current
+        node's state.
+    
+    Author: Zac Wolter
+    """
     path = []
     while node.parent:
-        path.insert(0, node.action) # insert at index 0 (start)
+        path.insert(0, node.action)
         node = node.parent
     return path
     
 def print_solution(goal_node):
+    """
+    Prints out the list of actions given by the goal_node object.
+
+    @param goal_node:
+        A Node object representing the goal node.
+    
+    Author: Zac Wolter
+    """
     path = goal_node.path()
     print("Solution Steps:\n")
     for node in path:
@@ -800,23 +892,15 @@ def solve_weighted_sokoban(warehouse):
             If the puzzle is already in a goal state, simply return []
             C is the total cost of the action sequence C
 
-
-    Method:
-    - If boxes in targets return S = [], C = 0 
-    - solve sokoban with problem class
-        - call astar_graph_search
-        - calculate path_cost
-    - return S and C
-
-
+    Authors: Max Spokes and Zac Wolter
     '''
 
-    if warehouse.__str__().count(".") == 0: # boxes are already on targets
+    if warehouse.__str__().count(".") == 0: # Boxes are already on targets
         return "Impossible", None
-    else: # puzzle needs to be solved
+    else: # Puzzle needs to be solved
         sp = SokobanPuzzle(warehouse)
         astar = search.astar_graph_search(sp)
-        if astar == None:
+        if astar == None: # Puzzle is impossible to solve due to some constraint
             return "Impossible", None
         else:
             print_solution(astar)
